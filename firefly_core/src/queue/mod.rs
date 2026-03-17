@@ -2,7 +2,11 @@ use std::collections::VecDeque;
 
 use crate::track::Track;
 
+#[cfg(test)]
+pub mod tests;
+
 /// Struct to act as a queue of tracks.
+#[derive(Default)]
 pub struct Queue {
     current_track: Option<Track>,
     previous_tracks: Vec<Track>,
@@ -40,7 +44,7 @@ impl Queue {
     }
 
     /// Push-front a new track to the next-track queue.
-    pub fn queue_next(&mut self, track: Track) {
+    pub fn prepend_queue(&mut self, track: Track) {
         self.next_tracks.push_front(track);
     }
 }
