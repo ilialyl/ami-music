@@ -1,6 +1,6 @@
-use crate::{player::Player, queue::Queue};
+use crate::{player::Playback, queue::Queue};
 
 pub struct Orchestrator {
-    player: Player,
+    player: Playback,
     queue: Queue,
 }
