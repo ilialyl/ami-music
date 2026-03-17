@@ -15,7 +15,8 @@ pub struct Queue {
 
 impl Queue {
     /// Skip to the next track and push current track to the previous-track stack.
-    pub fn next(&mut self) {
+    /// Return boolean indicating whether the value changed or not.
+    pub fn next(&mut self) -> bool {
         if !self.next_tracks.is_empty()
             && let Some(next) = self.next_tracks.pop_front()
         {
@@ -23,11 +24,15 @@ impl Queue {
                 self.previous_tracks.push(curr);
             }
             self.current_track = Some(next);
+            true
+        } else {
+            false
         }
     }
 
     /// Go back to the previous track and push-front current track to next-track queue.
-    pub fn prev(&mut self) {
+    /// Return boolean indicating whether the value changed or not.
+    pub fn prev(&mut self) -> bool {
         if !self.previous_tracks.is_empty()
             && let Some(prev) = self.previous_tracks.pop()
         {
@@ -35,6 +40,9 @@ impl Queue {
                 self.next_tracks.push_front(curr);
             }
             self.current_track = Some(prev);
+            true
+        } else {
+            false
         }
     }
 
