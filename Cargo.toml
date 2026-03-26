@@ -1,5 +1,5 @@
 [workspace]
 members = [
-    "daemon",
-    "firefly_core",
+    "snowy_daemon",
+    "snowy_core",
 ]

@@ -1,0 +1,7 @@
+[package]
+name = "snowy_daemon"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+snowy_core = { path = "../snowy_core" }
