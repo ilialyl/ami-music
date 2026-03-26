@@ -3,8 +3,8 @@ use anyhow::Result;
 use crate::{player::Playback, queue::Queue};
 
 pub struct Orchestrator {
-    player: Playback,
-    queue: Queue,
+    pub player: Playback,
+    pub queue: Queue,
 }
 
 impl Orchestrator {

@@ -5,3 +5,5 @@ edition = "2024"
 
 [dependencies]
 snowy_core = { path = "../snowy_core" }
+tokio = "1.50.0"
+
