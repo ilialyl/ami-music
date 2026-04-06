@@ -15,17 +15,19 @@ use crate::track::properties::Properties;
 
 /// Stores necessary information about a track.
 pub struct Track {
+    pub id: u64,
     pub pathbuf: PathBuf,
     pub metadata: Metadata,
     pub properties: Properties,
 }
 
 impl Track {
-    pub fn new(path: &Path) -> Result<Self> {
+    pub fn new(path: &Path, id: u64) -> Result<Self> {
         let tagged_file = Probe::open(path)?
             .options(ParseOptions::new().read_cover_art(false))
             .read()?;
         Ok(Self {
+            id,
             pathbuf: path.to_path_buf(),
             metadata: Self::parse_metadata(&tagged_file)?,
             properties: Self::parse_properties(&tagged_file),

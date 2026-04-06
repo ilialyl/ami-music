@@ -1,3 +1,4 @@
+pub mod library;
 pub mod orchestrator;
 pub mod player;
 pub mod queue;

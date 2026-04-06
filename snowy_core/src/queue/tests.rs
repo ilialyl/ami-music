@@ -8,8 +8,8 @@ fn next() {
     let pathbuf_1 = PathBuf::from("../test_assets/test.flac");
     let pathbuf_2 = PathBuf::from("../test_assets/test1.flac");
 
-    queue.enqueue(Track::new(pathbuf_1.as_path()).unwrap());
-    queue.enqueue(Track::new(pathbuf_2.as_path()).unwrap());
+    queue.enqueue(Track::new(pathbuf_1.as_path(), 1).unwrap());
+    queue.enqueue(Track::new(pathbuf_2.as_path(), 2).unwrap());
 
     assert!(queue.next());
     assert_eq!(queue.current_track.as_ref().unwrap().pathbuf, pathbuf_1);
@@ -28,8 +28,8 @@ fn prev() {
     let pathbuf_1 = PathBuf::from("../test_assets/test.flac");
     let pathbuf_2 = PathBuf::from("../test_assets/test1.flac");
 
-    queue.enqueue(Track::new(pathbuf_1.as_path()).unwrap());
-    queue.enqueue(Track::new(pathbuf_2.as_path()).unwrap());
+    queue.enqueue(Track::new(pathbuf_1.as_path(), 1).unwrap());
+    queue.enqueue(Track::new(pathbuf_2.as_path(), 2).unwrap());
 
     assert!(!queue.prev());
     assert!(queue.current_track.is_none());
@@ -47,8 +47,8 @@ fn prepend() {
     let pathbuf_1 = PathBuf::from("../test_assets/test.flac");
     let pathbuf_2 = PathBuf::from("../test_assets/test1.flac");
 
-    queue.enqueue(Track::new(pathbuf_1.as_path()).unwrap());
-    queue.prepend_queue(Track::new(pathbuf_2.as_path()).unwrap());
+    queue.enqueue(Track::new(pathbuf_1.as_path(), 1).unwrap());
+    queue.prepend_queue(Track::new(pathbuf_2.as_path(), 2).unwrap());
     queue.next();
     assert_eq!(queue.current_track.unwrap().pathbuf, pathbuf_2);
 }
