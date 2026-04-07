@@ -1,3 +1,6 @@
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Properties {
     pub bitrate: Option<u32>,
     pub bit_depth: Option<u8>,

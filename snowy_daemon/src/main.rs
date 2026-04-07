@@ -1,23 +1,29 @@
 use std::{net::SocketAddr, sync::Arc};
 
+use anyhow::Result;
 use futures_util::{SinkExt, StreamExt};
+use snowy_core::config::Config;
 use tokio::{
     net::{TcpListener, TcpStream},
     sync::{Mutex, broadcast},
 };
 use tokio_tungstenite::{accept_async, tungstenite::Message};
 
-use crate::{commands::Command, states::AppState};
+use crate::{commands::Command, events::ServerEvent, states::AppState};
 
 pub mod commands;
+pub mod events;
 pub mod states;
 
 // How many messages the broadcast channel can buffer
 const CHANNEL_CAPACITY: usize = 32;
 
 #[tokio::main]
-async fn main() {
-    let state = Arc::new(Mutex::new(AppState::default()));
+async fn main() -> Result<()> {
+    let state = Arc::new(Mutex::new(AppState::new()?));
+    let config = Config::load()?;
+    state.lock().await.library.load(config.library);
+
     let addr = "127.0.0.1:8080";
     let listener = TcpListener::bind(addr).await.unwrap();
     println!("Server listening on {addr}");
@@ -40,7 +46,7 @@ async fn handle_connection(
     peer: SocketAddr,
     tx: Arc<broadcast::Sender<String>>,
     state: Arc<Mutex<AppState>>,
-) {
+) -> Result<()> {
     println!("{peer} connected");
 
     // Upgrade the TCP connection to a WebSocket
@@ -62,6 +68,11 @@ async fn handle_connection(
                         let mut state = state.lock().await;
                         // Mutate state based on command
                         match cmd {
+                            Command::GetLibrary => {
+                                let event = ServerEvent::Library(state.library.tracks.clone());
+                                let json = serde_json::to_string(&event).unwrap();
+                                let _ = tx.send(json);
+                            },
                             _ => todo!()
                         }
                     }}
@@ -80,4 +91,6 @@ async fn handle_connection(
     }
 
     println!("{peer} disconnected");
+
+    Ok(())
 }

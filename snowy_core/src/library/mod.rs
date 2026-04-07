@@ -6,7 +6,7 @@ pub mod helper;
 
 #[derive(Default)]
 pub struct Library {
-    tracks: Vec<Track>,
+    pub tracks: Vec<Track>,
 }
 
 impl Library {

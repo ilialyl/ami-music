@@ -2,4 +2,5 @@
 members = [
     "snowy_daemon",
     "snowy_core",
+    "tui_client",
 ]

@@ -10,10 +10,12 @@ use lofty::{
     probe::Probe,
     tag::Accessor,
 };
+use serde::{Deserialize, Serialize};
 
 use crate::track::{metadata::Metadata, properties::Properties};
 
 /// Stores necessary information about a track.
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Track {
     pub id: u64,
     pub pathbuf: PathBuf,
