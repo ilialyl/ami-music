@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
+use snowy_core::library::TrackId;
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
 pub enum Command {
@@ -25,9 +26,9 @@ pub enum PlaybackCommand {
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
 pub enum QueueCommand {
-    Enqueue { track_id: u64 },
-    Prepend { track_id: u64 },
-    Dequeue { position: usize, track_id: u64 },
+    Enqueue { track_id: TrackId },
+    Prepend { track_id: TrackId },
+    Dequeue { position: usize, track_id: TrackId },
     Next,
     Prev,
     Shuffle,

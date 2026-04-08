@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 use snowy_core::{library::TrackId, track::Track};
@@ -6,5 +6,5 @@ use snowy_core::{library::TrackId, track::Track};
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type", content = "data")]
 pub enum ServerEvent {
-    SendLibrary(HashMap<TrackId, Track>),
+    SendLibrary(HashMap<TrackId, Arc<Track>>),
 }

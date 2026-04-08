@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs::read_dir};
+use std::{collections::HashMap, fs::read_dir, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 
@@ -6,19 +6,29 @@ use crate::{config::LibraryConfig, library::helper::is_rodio_supported, track::T
 
 pub mod helper;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub struct TrackId(u64);
+
+impl TrackId {
+    pub fn increment(&mut self) {
+        self.0 += 1;
+    }
+
+    pub fn decrement(&mut self) {
+        self.0 -= 1;
+    }
+}
 
 #[derive(Default)]
 pub struct Library {
-    pub tracks: HashMap<TrackId, Track>,
+    pub tracks: HashMap<TrackId, Arc<Track>>,
 }
 
 impl Library {
     pub fn load(&mut self, config: LibraryConfig) {
         self.tracks.clear();
 
-        let mut id = 0;
+        let mut id = TrackId::default();
 
         let track_vec: Vec<Track> = config
             .directories
@@ -36,8 +46,10 @@ impl Library {
 
         let mut tracks = HashMap::new();
         track_vec.into_iter().for_each(|t| {
-            id += 1;
-            tracks.insert(id, t);
+            id.increment();
+            tracks.insert(id, Arc::new(t));
         });
+
+        self.tracks = tracks;
     }
 }
