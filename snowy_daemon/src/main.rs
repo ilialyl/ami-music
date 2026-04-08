@@ -10,10 +10,6 @@ use tokio::{
 };
 use tokio_tungstenite::{accept_async, tungstenite::Message};
 
-pub mod commands;
-pub mod events;
-pub mod states;
-
 // How many messages the broadcast channel can buffer
 const CHANNEL_CAPACITY: usize = 32;
 
@@ -66,7 +62,7 @@ async fn handle_connection(
                         if let Ok(cmd) = serde_json::from_str::<Command>(&text) {
                             let mut state = state.lock().await;
                             // Mutate state based on command
-                            handle_command(cmd, &mut state);
+                            handle_command(cmd, &mut state, &tx)?;
                     }}
                     // Client disconnected or error
                     _ => break,

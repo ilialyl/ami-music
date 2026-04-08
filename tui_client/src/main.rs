@@ -38,7 +38,7 @@ async fn main() {
                     {
                         if let Ok(event) = serde_json::from_str::<ServerEvent>(&text) {
                         match event {
-                            ServerEvent::Library(tracks) => println!("{tracks:#?}"),
+                            ServerEvent::SendLibrary(tracks) => println!("{tracks:#?}"),
                         }}
                     },
                     _ => break,
