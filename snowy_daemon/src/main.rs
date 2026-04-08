@@ -62,7 +62,7 @@ async fn handle_connection(
                         if let Ok(cmd) = serde_json::from_str::<Command>(&text) {
                             let mut state = state.lock().await;
                             // Mutate state based on command
-                            handle_command(cmd, &mut state, &tx)?;
+                            handle_command(cmd, &mut state, &tx).await?;
                     }}
                     // Client disconnected or error
                     _ => break,

@@ -7,37 +7,66 @@ use crate::{
     states::AppState,
 };
 
-pub fn handle_command(
+pub async fn handle_command(
     command: Command,
     state: &mut AppState,
     tx: &broadcast::Sender<String>,
 ) -> Result<()> {
     match command {
-        Command::Playback(cmd) => handle_playback_command(cmd, state, tx),
-        Command::Queue(cmd) => handle_queue_command(cmd, state, tx),
-        Command::Library(cmd) => handle_library_command(cmd, state, tx),
+        Command::Playback(cmd) => handle_playback_command(cmd, state, tx).await,
+        Command::Queue(cmd) => handle_queue_command(cmd, state, tx).await,
+        Command::Library(cmd) => handle_library_command(cmd, state, tx).await,
     }
 }
 
-pub fn handle_playback_command(
+pub async fn handle_playback_command(
     command: PlaybackCommand,
     state: &mut AppState,
     tx: &broadcast::Sender<String>,
 ) -> Result<()> {
     match command {
-        PlaybackCommand::Play => todo!(),
-        PlaybackCommand::Pause => todo!(),
-        PlaybackCommand::TogglePlay => todo!(),
-        PlaybackCommand::SetPosition(_) => todo!(),
-        PlaybackCommand::Seek { .. } => todo!(),
-        PlaybackCommand::Restart => todo!(),
-        PlaybackCommand::IncreaseVol { .. } => todo!(),
-        PlaybackCommand::DecreaseVol { .. } => todo!(),
-        PlaybackCommand::SetVolume { .. } => todo!(),
-    }
+        PlaybackCommand::Play => state.orchestrator.lock().await.playback.play(),
+
+        PlaybackCommand::Pause => state.orchestrator.lock().await.playback.pause(),
+
+        PlaybackCommand::TogglePlay => state.orchestrator.lock().await.playback.toggle_play(),
+
+        PlaybackCommand::SetPosition(pos) => {
+            state.orchestrator.lock().await.playback.set_position(pos)?
+        }
+
+        PlaybackCommand::Seek { offset_seconds } => state
+            .orchestrator
+            .lock()
+            .await
+            .playback
+            .seek(offset_seconds)?,
+
+        PlaybackCommand::Restart => state.orchestrator.lock().await.playback.seek(0)?,
+
+        PlaybackCommand::IncreaseVol { step } => state
+            .orchestrator
+            .lock()
+            .await
+            .playback
+            .increase_volume(step),
+
+        PlaybackCommand::DecreaseVol { step } => state
+            .orchestrator
+            .lock()
+            .await
+            .playback
+            .decrease_volume(step),
+
+        PlaybackCommand::SetVolume { value } => {
+            state.orchestrator.lock().await.playback.set_volume(value)
+        }
+    };
+
+    Ok(())
 }
 
-pub fn handle_queue_command(
+pub async fn handle_queue_command(
     command: QueueCommand,
     state: &mut AppState,
     tx: &broadcast::Sender<String>,
@@ -50,10 +79,12 @@ pub fn handle_queue_command(
         QueueCommand::Prev => todo!(),
         QueueCommand::Shuffle => todo!(),
         QueueCommand::Clear => todo!(),
-    }
+    };
+
+    Ok(())
 }
 
-pub fn handle_library_command(
+pub async fn handle_library_command(
     command: LibraryCommand,
     state: &mut AppState,
     tx: &broadcast::Sender<String>,

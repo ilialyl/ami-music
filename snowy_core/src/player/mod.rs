@@ -1,4 +1,4 @@
-use std::{fs::File, path::Path};
+use std::{fs::File, path::Path, time::Duration};
 
 use anyhow::Result;
 use rodio::{Decoder, MixerDeviceSink, Player};
@@ -55,6 +55,14 @@ impl Playback {
         self.player.volume()
     }
 
+    pub fn increase_volume(&self, step: f32) {
+        self.player.set_volume((self.volume() + step).min(2f32));
+    }
+
+    pub fn decrease_volume(&self, step: f32) {
+        self.player.set_volume((self.volume() - step).max(0f32));
+    }
+
     pub fn set_volume(&self, value: f32) {
         self.player.set_volume(value);
     }
@@ -71,5 +79,21 @@ impl Playback {
         } else {
             PlaybackStatus::Playing
         }
+    }
+
+    pub fn set_position(&self, pos: Duration) -> Result<()> {
+        self.player.try_seek(pos)?;
+
+        Ok(())
+    }
+
+    pub fn seek(&self, offset_seconds: i64) -> Result<()> {
+        let duration = (self.player.get_pos().as_secs() as i64)
+            .saturating_add(offset_seconds)
+            .max(0) as u64;
+
+        self.player.try_seek(Duration::from_secs(duration))?;
+
+        Ok(())
     }
 }

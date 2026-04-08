@@ -3,14 +3,14 @@ use anyhow::Result;
 use crate::{player::Playback, queue::Queue};
 
 pub struct Orchestrator {
-    pub player: Playback,
+    pub playback: Playback,
     pub queue: Queue,
 }
 
 impl Orchestrator {
     pub fn new() -> Result<Self> {
         Ok(Orchestrator {
-            player: Playback::new()?,
+            playback: Playback::new()?,
             queue: Queue::default(),
         })
     }
