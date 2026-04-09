@@ -1,5 +1,5 @@
 use futures_util::{SinkExt, StreamExt};
-use snowy_daemon::commands::{Command, LibraryCommand};
+use snowy_daemon::commands::{Command, LibraryCommand, QueueCommand};
 use snowy_daemon::events::ServerEvent;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio_tungstenite::connect_async;
@@ -24,8 +24,9 @@ async fn main() {
             // User typed something → send it to the server
             line = stdin.next_line() => {
                 match line.unwrap() {
-                    Some(text) => {
-                        ws_sink.send(Message::Text(text.into())).await.unwrap();
+                    Some(_) => {
+                        let json = serde_json::to_string(&Command::Queue(QueueCommand::Clear)).unwrap();
+                        ws_sink.send(Message::Text(json.into())).await.unwrap();
                     }
                     None => break, // stdin closed (Ctrl+D)
                 }
@@ -39,6 +40,7 @@ async fn main() {
                         if let Ok(event) = serde_json::from_str::<ServerEvent>(&text) {
                         match event {
                             ServerEvent::SendLibrary(tracks) => println!("{tracks:#?}"),
+                            ServerEvent::SendQueue(queue) => println!("{queue:#?}"),
                         }}
                     },
                     _ => break,

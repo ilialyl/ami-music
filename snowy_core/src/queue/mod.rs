@@ -1,6 +1,7 @@
 use std::{collections::VecDeque, sync::Arc};
 
 use rand::{rng, seq::SliceRandom};
+use serde::{Deserialize, Serialize};
 
 use crate::track::Track;
 
@@ -8,7 +9,7 @@ use crate::track::Track;
 pub mod tests;
 
 /// Struct to act as a queue of tracks.
-#[derive(Default)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct Queue {
     current_track: Option<Arc<Track>>,
     previous_tracks: Vec<Arc<Track>>,

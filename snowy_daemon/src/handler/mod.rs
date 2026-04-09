@@ -84,6 +84,10 @@ pub async fn handle_queue_command(
         QueueCommand::Clear => clear(state).await,
     };
 
+    let event = ServerEvent::SendQueue(state.orchestrator.lock().await.queue.clone());
+    let json = serde_json::to_string(&event)?;
+    let _ = tx.send(json);
+
     Ok(())
 }
 
