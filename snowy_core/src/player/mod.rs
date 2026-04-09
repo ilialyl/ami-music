@@ -3,12 +3,13 @@ use std::{fs::File, path::Path, time::Duration};
 use anyhow::Result;
 use rodio::{Decoder, MixerDeviceSink, Player};
 
-use crate::player::playback_status::PlaybackStatus;
+use crate::player::{playback_snapshot::PlayerSnapshot, playback_status::PlaybackStatus};
 
 #[cfg(test)]
 pub mod tests;
 
 pub mod mpris;
+pub mod playback_snapshot;
 pub mod playback_status;
 
 /// Performs player-related functionalities.
@@ -95,5 +96,14 @@ impl Playback {
         self.player.try_seek(Duration::from_secs(duration))?;
 
         Ok(())
+    }
+
+    pub fn get_snapshot(&self) -> PlayerSnapshot {
+        PlayerSnapshot {
+            playback_status: self.playback_status(),
+            volume: self.volume(),
+            playback_speed: self.playback_speed(),
+            position: self.player.get_pos(),
+        }
     }
 }
