@@ -11,7 +11,7 @@ pub mod tests;
 /// Struct to act as a queue of tracks.
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct Queue {
-    current_track: Option<Arc<Track>>,
+    pub current_track: Option<Arc<Track>>,
     previous_tracks: Vec<Arc<Track>>,
     next_tracks: VecDeque<Arc<Track>>,
 }

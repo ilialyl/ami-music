@@ -14,4 +14,13 @@ impl Orchestrator {
             queue: Queue::default(),
         })
     }
+
+    pub fn play(&mut self) -> Result<()> {
+        if let Some(current) = self.queue.current_track.as_mut() {
+            self.playback.load_track(&current.pathbuf)?;
+            self.playback.play();
+        }
+
+        Ok(())
+    }
 }

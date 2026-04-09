@@ -14,7 +14,7 @@ pub mod playback_status;
 
 /// Performs player-related functionalities.
 pub struct Playback {
-    player: Player,
+    pub player: Player,
     _sink: MixerDeviceSink,
 }
 

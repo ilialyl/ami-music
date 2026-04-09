@@ -9,7 +9,7 @@ dirs = "6.0.0"
 lofty = "0.22.4"
 mpris-server = "0.9.0"
 rand = "0.10.0"
-rodio = "0.22.2"
+rodio = { git = "https://github.com/RustAudio/rodio.git", features = ["symphonia-libopus"] }
 serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.50.0", features = ["sync"] }
 toml = "1.1.2"
