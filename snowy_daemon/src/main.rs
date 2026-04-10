@@ -55,13 +55,13 @@ async fn handle_connection(
 
     loop {
         tokio::select! {
-            // A message arrived from THIS client → broadcast to everyone
+            // Receive messages from clients.
             msg = ws_stream.next() => {
                 match msg {
                     Some(Ok(Message::Text(text))) => {
                         if let Ok(cmd) = serde_json::from_str::<Command>(&text) {
                             let mut state = state.lock().await;
-                            // Mutate state based on command
+                            // Handle commands. Mutate state and send messages to the local broadcast channel if needed.
                             handle_command(cmd, &mut state, &tx).await?;
                     }}
                     // Client disconnected or error
@@ -69,7 +69,7 @@ async fn handle_connection(
                 }
             }
 
-            // A broadcast message arrived → forward it to THIS client
+            // Send messages accumulated in the local broadcast channel to all clients.
             broadcast = rx.recv() => {
                 if let Ok(text) = broadcast {
                     let _ = ws_sink.send(Message::Text(text.into())).await;
