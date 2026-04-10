@@ -1,6 +1,5 @@
 use anyhow::Result;
-
-use crate::{player::Playback, queue::Queue};
+use snowy_core::{player::Playback, queue::Queue};
 
 pub struct Orchestrator {
     pub playback: Playback,

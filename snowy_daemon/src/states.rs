@@ -1,8 +1,10 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use snowy_core::{library::Library, orchestrator::Orchestrator};
+use snowy_core::library::Library;
 use tokio::sync::Mutex;
+
+use crate::orchestrator::Orchestrator;
 
 pub struct AppState {
     pub orchestrator: Arc<Mutex<Orchestrator>>,
