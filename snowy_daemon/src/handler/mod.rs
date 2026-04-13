@@ -28,46 +28,28 @@ pub async fn handle_playback_command(
     tx: &broadcast::Sender<String>,
 ) -> Result<()> {
     match command {
-        PlaybackCommand::Play => state.orchestrator.lock().await.playback.play(),
+        PlaybackCommand::Play => state.orchestrator.playback.play(),
 
-        PlaybackCommand::Pause => state.orchestrator.lock().await.playback.pause(),
+        PlaybackCommand::Pause => state.orchestrator.playback.pause(),
 
-        PlaybackCommand::TogglePlay => state.orchestrator.lock().await.playback.toggle_play(),
+        PlaybackCommand::TogglePlay => state.orchestrator.playback.toggle_play(),
 
-        PlaybackCommand::SetPosition(pos) => {
-            state.orchestrator.lock().await.playback.set_position(pos)?
+        PlaybackCommand::SetPosition(pos) => state.orchestrator.playback.set_position(pos)?,
+
+        PlaybackCommand::Seek { offset_seconds } => {
+            state.orchestrator.playback.seek(offset_seconds)?
         }
 
-        PlaybackCommand::Seek { offset_seconds } => state
-            .orchestrator
-            .lock()
-            .await
-            .playback
-            .seek(offset_seconds)?,
+        PlaybackCommand::Restart => state.orchestrator.playback.seek(0)?,
 
-        PlaybackCommand::Restart => state.orchestrator.lock().await.playback.seek(0)?,
+        PlaybackCommand::IncreaseVol { step } => state.orchestrator.playback.increase_volume(step),
 
-        PlaybackCommand::IncreaseVol { step } => state
-            .orchestrator
-            .lock()
-            .await
-            .playback
-            .increase_volume(step),
+        PlaybackCommand::DecreaseVol { step } => state.orchestrator.playback.decrease_volume(step),
 
-        PlaybackCommand::DecreaseVol { step } => state
-            .orchestrator
-            .lock()
-            .await
-            .playback
-            .decrease_volume(step),
-
-        PlaybackCommand::SetVolume { value } => {
-            state.orchestrator.lock().await.playback.set_volume(value)
-        }
+        PlaybackCommand::SetVolume { value } => state.orchestrator.playback.set_volume(value),
     };
 
-    let event =
-        ServerEvent::SendPlayerSnapshot(state.orchestrator.lock().await.playback.get_snapshot());
+    let event = ServerEvent::SendPlayerSnapshot(state.orchestrator.playback.get_snapshot());
     let json = serde_json::to_string(&event)?;
     let _ = tx.send(json);
 
@@ -89,7 +71,7 @@ pub async fn handle_queue_command(
         QueueCommand::Clear => clear(state).await,
     };
 
-    let event = ServerEvent::SendQueue(state.orchestrator.lock().await.queue.clone());
+    let event = ServerEvent::SendQueue(state.orchestrator.queue.clone());
     let json = serde_json::to_string(&event)?;
     let _ = tx.send(json);
 

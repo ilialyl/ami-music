@@ -28,15 +28,7 @@ async fn main() -> Result<()> {
     let config = Config::load()?;
     state.lock().await.library.load(config.library);
 
-    let player = state
-        .lock()
-        .await
-        .orchestrator
-        .lock()
-        .await
-        .playback
-        .player
-        .clone();
+    let player = state.lock().await.orchestrator.playback.player.clone();
 
     tokio::spawn(Orchestrator::watch_track_end(
         player,

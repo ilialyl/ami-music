@@ -15,10 +15,13 @@ pub async fn handle_internal_event(
     match event {
         InternalEvent::PlayerEmpty => {
             print!("player empty");
-            let mut orchestrator = state.orchestrator.lock().await;
-            orchestrator.queue.next();
-            if let Some(current) = orchestrator.queue.current_track.clone() {
-                orchestrator.playback.load_track(&current.pathbuf)?;
+            if !state.orchestrator.queue.is_empty() {
+                state.orchestrator.queue.next();
+                if let Some(current) = state.orchestrator.queue.current_track.clone() {
+                    state.orchestrator.playback.load_track(&current.pathbuf)?;
+                }
+            } else {
+                state.orchestrator.playback.pause();
             }
         }
     }
