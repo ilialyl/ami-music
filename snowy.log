@@ -1,8 +1,0 @@
-[2026-04-13T06:27:46Z DEBUG tungstenite::handshake::server] Server handshake done.
-[2026-04-13T06:27:54Z DEBUG snowy_core::player] Set pause_reason to None.
-[2026-04-13T06:28:02Z DEBUG snowy_core::player] Set pause_reason to None.
-[2026-04-13T06:28:28Z DEBUG snowy_core::player] Set pause_reason to None.
-[2026-04-13T06:29:18Z DEBUG tungstenite::handshake::server] Server handshake done.
-[2026-04-13T06:29:21Z DEBUG snowy_core::player] Set pause_reason to None.
-[2026-04-13T06:34:11Z DEBUG tungstenite::handshake::server] Server handshake done.
-[2026-04-13T06:34:19Z DEBUG snowy_core::player] Set pause_reason to None.
