@@ -29,7 +29,7 @@ async fn main() -> Result<()> {
 
     let state = Arc::new(Mutex::new(AppState::new(internal_event_tx.clone())?));
     let config = Config::load()?;
-    state.lock().await.library.load(config.library);
+    state.lock().await.orchestrator.library.load(config.library);
 
     let player = state.lock().await.orchestrator.playback.player.clone();
 

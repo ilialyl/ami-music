@@ -4,11 +4,8 @@ use tokio::sync::broadcast;
 use crate::{
     commands::{Command, LibraryCommand, PlaybackCommand, QueueCommand},
     events::ServerEvent,
-    handler::queue::{clear, dequeue, enqueue, next, prepend, prev, shuffle},
     states::AppState,
 };
-
-pub mod queue;
 
 pub async fn handle_command(
     command: Command,
@@ -62,13 +59,13 @@ pub async fn handle_queue_command(
     tx: &broadcast::Sender<String>,
 ) -> Result<()> {
     match command {
-        QueueCommand::Enqueue { track_id } => enqueue(track_id, state).await,
-        QueueCommand::Prepend { track_id } => prepend(track_id, state).await,
-        QueueCommand::Dequeue { index } => dequeue(index, state).await,
-        QueueCommand::Next => next(state).await,
-        QueueCommand::Prev => prev(state).await,
-        QueueCommand::Shuffle => shuffle(state).await,
-        QueueCommand::Clear => clear(state).await,
+        QueueCommand::Enqueue { track_id } => state.orchestrator.enqueue(track_id),
+        QueueCommand::Prepend { track_id } => state.orchestrator.prepend(track_id),
+        QueueCommand::Dequeue { index } => state.orchestrator.dequeue(index),
+        QueueCommand::Next => state.orchestrator.next(),
+        QueueCommand::Prev => state.orchestrator.prev(),
+        QueueCommand::Shuffle => state.orchestrator.shuffle(),
+        QueueCommand::Clear => state.orchestrator.clear(),
         QueueCommand::Fetch => {}
     };
 
@@ -86,7 +83,7 @@ pub async fn handle_library_command(
 ) -> Result<()> {
     match command {
         LibraryCommand::Fetch => {
-            let event = ServerEvent::SendLibrary(state.library.tracks.clone());
+            let event = ServerEvent::SendLibrary(state.orchestrator.library.tracks.clone());
             let json = serde_json::to_string(&event)?;
             let _ = tx.send(json);
         }
