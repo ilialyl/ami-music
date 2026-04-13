@@ -67,7 +67,7 @@ impl Playback {
         if self.player.is_paused() {
             self.player.play();
         } else {
-            self.player.play();
+            self.player.pause();
         }
     }
 
