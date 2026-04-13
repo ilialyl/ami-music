@@ -59,11 +59,11 @@ pub async fn handle_queue_command(
     tx: &broadcast::Sender<String>,
 ) -> Result<()> {
     match command {
-        QueueCommand::Enqueue { track_id } => state.orchestrator.enqueue(track_id),
+        QueueCommand::Enqueue { track_id } => state.orchestrator.enqueue(track_id).await?,
         QueueCommand::Prepend { track_id } => state.orchestrator.prepend(track_id),
         QueueCommand::Dequeue { index } => state.orchestrator.dequeue(index),
-        QueueCommand::Next => state.orchestrator.next(),
-        QueueCommand::Prev => state.orchestrator.prev(),
+        QueueCommand::Next => state.orchestrator.next().await?,
+        QueueCommand::Prev => state.orchestrator.prev().await?,
         QueueCommand::Shuffle => state.orchestrator.shuffle(),
         QueueCommand::Clear => state.orchestrator.clear(),
         QueueCommand::Fetch => {}

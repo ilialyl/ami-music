@@ -1,4 +1,4 @@
-use crate::states::AppState;
+use crate::{events::ServerEvent, states::AppState};
 use anyhow::Result;
 use snowy_core::player::pause_reason::PauseReason;
 use tokio::sync::broadcast;
@@ -23,10 +23,17 @@ pub async fn handle_internal_event(
                     .playback
                     .load_track(&track.pathbuf)
                     .await?;
+
+                let event =
+                    ServerEvent::SendPlayerSnapshot(state.orchestrator.playback.get_snapshot());
+                let _ = connection_tx.send(serde_json::to_string(&event)?);
             } else if state.orchestrator.queue.current_track.is_some()
                 && *state.orchestrator.playback.pause_reason.lock().await != PauseReason::Exhaustion
             {
                 state.orchestrator.playback.on_exhaustion().await;
+                let event =
+                    ServerEvent::SendPlayerSnapshot(state.orchestrator.playback.get_snapshot());
+                let _ = connection_tx.send(serde_json::to_string(&event)?);
             }
         }
     }

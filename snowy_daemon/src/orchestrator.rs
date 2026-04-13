@@ -4,7 +4,7 @@ use anyhow::Result;
 use rodio::Player;
 use snowy_core::{
     library::{Library, TrackId},
-    player::Playback,
+    player::{Playback, pause_reason::PauseReason},
     queue::Queue,
 };
 use tokio::sync::broadcast;
@@ -48,10 +48,21 @@ impl Orchestrator {
         }
     }
 
-    pub fn enqueue(&mut self, id: TrackId) {
+    pub async fn enqueue(&mut self, id: TrackId) -> Result<()> {
         if let Some(track) = self.library.tracks.get(&id) {
-            self.queue.enqueue(track.clone())
+            self.queue.enqueue(track.clone());
+            if self.queue.current_track.is_none()
+                && self.queue.next()
+                && let Some(track) = self.queue.current_track.as_ref()
+            {
+                self.playback.load_track(&track.pathbuf).await?;
+                if *self.playback.pause_reason.lock().await != PauseReason::User {
+                    self.playback.play().await;
+                };
+            }
         }
+
+        Ok(())
     }
 
     pub fn prepend(&mut self, id: TrackId) {
@@ -64,12 +75,30 @@ impl Orchestrator {
         self.queue.dequeue(index);
     }
 
-    pub fn next(&mut self) {
-        self.queue.next();
+    pub async fn next(&mut self) -> Result<()> {
+        if self.queue.next()
+            && let Some(track) = self.queue.current_track.as_ref()
+        {
+            self.playback.load_track(&track.pathbuf).await?;
+            if *self.playback.pause_reason.lock().await != PauseReason::User {
+                self.playback.play().await;
+            };
+        }
+
+        Ok(())
     }
 
-    pub fn prev(&mut self) {
-        self.queue.prev();
+    pub async fn prev(&mut self) -> Result<()> {
+        if self.queue.prev()
+            && let Some(track) = self.queue.current_track.as_ref()
+        {
+            self.playback.load_track(&track.pathbuf).await?;
+            if *self.playback.pause_reason.lock().await != PauseReason::User {
+                self.playback.play().await;
+            };
+        }
+
+        Ok(())
     }
 
     pub fn shuffle(&mut self) {
