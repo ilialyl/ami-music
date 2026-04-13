@@ -16,3 +16,5 @@ snowy_core = { path = "../snowy_core" }
 tokio = { version = "1.50.0", features = ["full", "rt-multi-thread"] }
 tokio-tungstenite = "0.29.0"
 rodio = { git = "https://github.com/RustAudio/rodio.git", features = ["symphonia-libopus"] }
+fern = "0.7.1"
+humantime = "2.3.0"

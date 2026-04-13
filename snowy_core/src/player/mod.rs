@@ -38,7 +38,7 @@ impl Playback {
         log::debug!("Opening {audio_path:?}.");
         let source = Decoder::try_from(File::open(audio_path)?)?;
         self.player.append(source);
-        if *self.pause_reason.lock().await == PauseReason::Exhaustion {
+        if *self.pause_reason.lock().await != PauseReason::User {
             self.play().await;
         }
 
@@ -66,8 +66,10 @@ impl Playback {
     pub fn toggle_play(&self) {
         if self.player.is_paused() {
             self.player.play();
+            log::debug!("Set to playing");
         } else {
             self.player.pause();
+            log::debug!("Set to paused");
         }
     }
 
@@ -78,14 +80,17 @@ impl Playback {
 
     pub fn increase_volume(&self, step: f32) {
         self.player.set_volume((self.volume() + step).min(2f32));
+        log::debug!("Set volume to {}", self.volume());
     }
 
     pub fn decrease_volume(&self, step: f32) {
         self.player.set_volume((self.volume() - step).max(0f32));
+        log::debug!("Set volume to {}", self.volume());
     }
 
     pub fn set_volume(&self, value: f32) {
         self.player.set_volume(value);
+        log::debug!("Set volume to {}", self.volume());
     }
 
     pub fn playback_speed(&self) -> f32 {
@@ -104,6 +109,7 @@ impl Playback {
 
     pub fn set_position(&self, pos: Duration) -> Result<()> {
         self.player.try_seek(pos)?;
+        log::debug!("Set position to {:?}", self.player.get_pos());
 
         Ok(())
     }
@@ -114,6 +120,7 @@ impl Playback {
             .max(0) as u64;
 
         self.player.try_seek(Duration::from_secs(duration))?;
+        log::debug!("Set position to {:?}", self.player.get_pos());
 
         Ok(())
     }

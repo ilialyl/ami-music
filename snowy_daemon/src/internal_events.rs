@@ -1,5 +1,6 @@
 use crate::states::AppState;
 use anyhow::Result;
+use snowy_core::player::pause_reason::PauseReason;
 use tokio::sync::broadcast;
 
 #[derive(Debug, Clone)]
@@ -14,17 +15,17 @@ pub async fn handle_internal_event(
 ) -> Result<()> {
     match event {
         InternalEvent::PlayerEmpty => {
-            print!("player empty");
-            if !state.orchestrator.queue.is_empty() {
-                state.orchestrator.queue.next();
-                if let Some(current) = state.orchestrator.queue.current_track.clone() {
-                    state
-                        .orchestrator
-                        .playback
-                        .load_track(&current.pathbuf)
-                        .await?;
-                }
-            } else {
+            if state.orchestrator.queue.next()
+                && let Some(track) = state.orchestrator.queue.current_track.clone()
+            {
+                state
+                    .orchestrator
+                    .playback
+                    .load_track(&track.pathbuf)
+                    .await?;
+            } else if state.orchestrator.queue.current_track.is_some()
+                && *state.orchestrator.playback.pause_reason.lock().await != PauseReason::Exhaustion
+            {
                 state.orchestrator.playback.on_exhaustion().await;
             }
         }

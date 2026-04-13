@@ -7,6 +7,7 @@ use snowy_daemon::{
     commands::Command,
     handler::handle_command,
     internal_events::{InternalEvent, handle_internal_event},
+    logging::setup_logger,
     orchestrator::Orchestrator,
     states::AppState,
 };
@@ -21,6 +22,8 @@ const CHANNEL_CAPACITY: usize = 32;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    setup_logger()?;
+
     let (internal_event_tx, _) = broadcast::channel::<InternalEvent>(CHANNEL_CAPACITY);
     let internal_event_tx = Arc::new(internal_event_tx);
 

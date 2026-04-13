@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use anyhow::Result;
 use rodio::Player;
@@ -27,6 +27,11 @@ impl Orchestrator {
         internal_event_tx: Arc<broadcast::Sender<InternalEvent>>,
     ) {
         loop {
+            if player.empty() {
+                tokio::time::sleep(Duration::from_millis(200)).await;
+                continue;
+            }
+
             let p = Arc::clone(&player);
             tokio::task::spawn_blocking(move || p.sleep_until_end())
                 .await
