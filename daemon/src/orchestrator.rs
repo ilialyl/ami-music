@@ -1,12 +1,12 @@
 use std::{sync::Arc, time::Duration};
 
-use anyhow::Result;
-use rodio::Player;
-use snowy_core::{
+use ami_core::{
     library::{Library, TrackId},
     player::{Playback, pause_reason::PauseReason},
     queue::Queue,
 };
+use anyhow::Result;
+use rodio::Player;
 use tokio::sync::broadcast;
 
 use crate::internal_events::InternalEvent;

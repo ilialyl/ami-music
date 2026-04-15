@@ -1,9 +1,7 @@
 use std::{net::SocketAddr, sync::Arc};
 
-use anyhow::Result;
-use futures_util::{SinkExt, StreamExt};
-use snowy_core::config::Config;
-use snowy_daemon::{
+use ami_core::config::Config;
+use ami_daemon::{
     commands::Command,
     handler::handle_command,
     internal_events::{InternalEvent, handle_internal_event},
@@ -11,6 +9,8 @@ use snowy_daemon::{
     orchestrator::Orchestrator,
     states::AppState,
 };
+use anyhow::Result;
+use futures_util::{SinkExt, StreamExt};
 use tokio::{
     net::{TcpListener, TcpStream},
     sync::{Mutex, broadcast},

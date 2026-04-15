@@ -1,9 +1,9 @@
 use std::{collections::HashMap, sync::Arc};
 
-use serde::{Deserialize, Serialize};
-use snowy_core::{
+use ami_core::{
     library::TrackId, player::playback_snapshot::PlayerSnapshot, queue::Queue, track::Track,
 };
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type", content = "data")]

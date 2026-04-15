@@ -1,7 +1,7 @@
 use std::time::Duration;
 
+use ami_core::library::TrackId;
 use serde::{Deserialize, Serialize};
-use snowy_core::library::TrackId;
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
 pub enum Command {

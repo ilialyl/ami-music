@@ -1,6 +1,6 @@
 use crate::{events::ServerEvent, states::AppState};
+use ami_core::player::pause_reason::PauseReason;
 use anyhow::Result;
-use snowy_core::player::pause_reason::PauseReason;
 use tokio::sync::broadcast;
 
 #[derive(Debug, Clone)]

@@ -14,6 +14,13 @@ pub struct LibraryConfig {
 }
 
 impl Config {
+    #[cfg(debug_assertions)]
+    pub fn load() -> Result<Self> {
+        let path = PathBuf::from("../ami_config.toml");
+        let text = std::fs::read_to_string(path)?;
+        Ok(toml::from_str(&text)?)
+    }
+    #[cfg(not(debug_assertions))]
     pub fn load() -> Result<Self> {
         let path = dirs::config_dir().unwrap().join("snowy_config.toml");
         let text = std::fs::read_to_string(path)?;

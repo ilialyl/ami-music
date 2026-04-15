@@ -40,6 +40,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "ami_core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dirs",
+ "lofty",
+ "log",
+ "mpris-server",
+ "rand 0.10.0",
+ "rodio",
+ "serde",
+ "tokio",
+ "toml",
+]
+
+[[package]]
+name = "ami_daemon"
+version = "0.1.0"
+dependencies = [
+ "ami_core",
+ "anyhow",
+ "axum",
+ "env_logger",
+ "fern",
+ "futures-util",
+ "humantime",
+ "log",
+ "mpris-server",
+ "rodio",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-tungstenite",
+]
+
+[[package]]
 name = "anstream"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1899,42 +1935,6 @@ name = "smallvec"
 version = "1.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
-
-[[package]]
-name = "snowy_core"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "dirs",
- "lofty",
- "log",
- "mpris-server",
- "rand 0.10.0",
- "rodio",
- "serde",
- "tokio",
- "toml",
-]
-
-[[package]]
-name = "snowy_daemon"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum",
- "env_logger",
- "fern",
- "futures-util",
- "humantime",
- "log",
- "mpris-server",
- "rodio",
- "serde",
- "serde_json",
- "snowy_core",
- "tokio",
- "tokio-tungstenite",
-]
 
 [[package]]
 name = "socket2"

@@ -1,5 +1,5 @@
 [package]
-name = "snowy_daemon"
+name = "ami_daemon"
 version = "0.1.0"
 edition = "2024"
 
@@ -12,7 +12,7 @@ log = "0.4.29"
 mpris-server = "0.9.0"
 serde = { version = "1.0.228", features = ["derive", "rc"] }
 serde_json = "1.0.149"
-snowy_core = { path = "../snowy_core" }
+ami_core = { path = "../core" }
 tokio = { version = "1.50.0", features = ["full", "rt-multi-thread"] }
 tokio-tungstenite = "0.29.0"
 rodio = { git = "https://github.com/RustAudio/rodio.git", features = ["symphonia-libopus"] }
