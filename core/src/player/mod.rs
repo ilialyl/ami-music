@@ -2,17 +2,13 @@ use std::{fs::File, path::Path, sync::Arc, time::Duration};
 
 use anyhow::Result;
 use rodio::{Decoder, MixerDeviceSink, Player};
-use tokio::sync::Mutex;
 
-use crate::player::{
-    pause_reason::PauseReason, playback_snapshot::PlayerSnapshot, playback_status::PlaybackStatus,
-};
+use crate::player::{playback_snapshot::PlayerSnapshot, playback_status::PlaybackStatus};
 
 #[cfg(test)]
 pub mod tests;
 
 pub mod mpris;
-pub mod pause_reason;
 pub mod playback_snapshot;
 pub mod playback_status;
 
@@ -20,7 +16,6 @@ pub mod playback_status;
 pub struct Playback {
     pub player: Arc<Player>,
     _sink: MixerDeviceSink,
-    pub pause_reason: Mutex<PauseReason>,
 }
 
 impl Playback {
@@ -29,37 +24,23 @@ impl Playback {
         Ok(Playback {
             player: Arc::new(rodio::Player::connect_new(sink.mixer())),
             _sink: sink,
-            pause_reason: Mutex::new(PauseReason::default()),
         })
     }
 
     /// Append audio source from path to the sink.
-    pub async fn load_track(&self, audio_path: &Path) -> Result<()> {
+    pub fn load_track(&self, audio_path: &Path) -> Result<()> {
         log::debug!("Opening {audio_path:?}.");
         let source = Decoder::try_from(File::open(audio_path)?)?;
         self.player.append(source);
-        if *self.pause_reason.lock().await != PauseReason::User {
-            self.play().await;
-        }
 
         Ok(())
     }
 
     pub async fn play(&self) {
-        *self.pause_reason.lock().await = PauseReason::None;
-        log::debug!("Set pause_reason to {:?}.", *self.pause_reason.lock().await);
         self.player.play();
     }
 
     pub async fn pause(&self) {
-        *self.pause_reason.lock().await = PauseReason::User;
-        log::debug!("Set pause_reason to {:?}.", *self.pause_reason.lock().await);
-        self.player.pause();
-    }
-
-    pub async fn on_exhaustion(&self) {
-        *self.pause_reason.lock().await = PauseReason::Exhaustion;
-        log::debug!("Set pause_reason to {:?}.", *self.pause_reason.lock().await);
         self.player.pause();
     }
 
@@ -71,6 +52,11 @@ impl Playback {
             self.player.pause();
             log::debug!("Set to paused");
         }
+    }
+
+    pub fn skip(&self) {
+        log::debug!("Player Skipping one.");
+        self.player.skip_one();
     }
 
     /// Returns f64 as volume

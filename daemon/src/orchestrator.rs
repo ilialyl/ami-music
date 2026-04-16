@@ -2,7 +2,7 @@ use std::{sync::Arc, time::Duration};
 
 use ami_core::{
     library::{Library, TrackId},
-    player::{Playback, pause_reason::PauseReason},
+    player::Playback,
     queue::Queue,
 };
 use anyhow::Result;
@@ -55,10 +55,11 @@ impl Orchestrator {
                 && self.queue.next()
                 && let Some(track) = self.queue.current_track.as_ref()
             {
-                self.playback.load_track(&track.pathbuf).await?;
-                if *self.playback.pause_reason.lock().await != PauseReason::User {
-                    self.playback.play().await;
-                };
+                self.playback.load_track(&track.pathbuf)?;
+                self.playback.play().await;
+            } else if self.queue.current_track.is_some() && self.playback.player.empty() {
+                self.playback.load_track(&track.pathbuf)?;
+                self.playback.play().await;
             }
         }
 
@@ -79,10 +80,9 @@ impl Orchestrator {
         if self.queue.next()
             && let Some(track) = self.queue.current_track.as_ref()
         {
-            self.playback.load_track(&track.pathbuf).await?;
-            if *self.playback.pause_reason.lock().await != PauseReason::User {
-                self.playback.play().await;
-            };
+            self.playback.player.clear();
+            self.playback.load_track(&track.pathbuf)?;
+            self.playback.play().await;
         }
 
         Ok(())
@@ -92,10 +92,9 @@ impl Orchestrator {
         if self.queue.prev()
             && let Some(track) = self.queue.current_track.as_ref()
         {
-            self.playback.load_track(&track.pathbuf).await?;
-            if *self.playback.pause_reason.lock().await != PauseReason::User {
-                self.playback.play().await;
-            };
+            self.playback.player.clear();
+            self.playback.load_track(&track.pathbuf)?;
+            self.playback.play().await;
         }
 
         Ok(())

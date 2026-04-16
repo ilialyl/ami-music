@@ -18,7 +18,6 @@ async fn play() {
     let player = Playback::new().unwrap();
     player
         .load_track(Path::new("../test_assets/test.flac"))
-        .await
         .unwrap();
     player.play().await;
     assert_eq!(player.playback_status(), PlaybackStatus::Playing);
@@ -29,7 +28,6 @@ async fn pause() {
     let player = Playback::new().unwrap();
     player
         .load_track(Path::new("../test_assets/test.flac"))
-        .await
         .unwrap();
     player.pause().await;
     assert_eq!(player.playback_status(), PlaybackStatus::Paused);

@@ -20,6 +20,7 @@ impl Queue {
     /// Skip to the next track and push current track to the previous-track stack.
     /// Return boolean indicating whether the value changed or not.
     pub fn next(&mut self) -> bool {
+        log::debug!("Called next()");
         if !self.next_tracks.is_empty()
             && let Some(next) = self.next_tracks.pop_front()
         {
@@ -37,6 +38,7 @@ impl Queue {
     /// Go back to the previous track and push-front current track to next-track queue.
     /// Return boolean indicating whether the value changed or not.
     pub fn prev(&mut self) -> bool {
+        log::debug!("Called prev()");
         if !self.previous_tracks.is_empty()
             && let Some(prev) = self.previous_tracks.pop()
         {

@@ -2,8 +2,8 @@ use std::{net::SocketAddr, sync::Arc};
 
 use ami_core::config::Config;
 use ami_daemon::{
+    command_handler::handle_command,
     commands::Command,
-    handler::handle_command,
     internal_events::{InternalEvent, handle_internal_event},
     logging::setup_logger,
     orchestrator::Orchestrator,
@@ -23,6 +23,7 @@ const CHANNEL_CAPACITY: usize = 32;
 #[tokio::main]
 async fn main() -> Result<()> {
     setup_logger()?;
+    log::debug!("Daemon starting...");
 
     let (internal_event_tx, _) = broadcast::channel::<InternalEvent>(CHANNEL_CAPACITY);
     let internal_event_tx = Arc::new(internal_event_tx);
