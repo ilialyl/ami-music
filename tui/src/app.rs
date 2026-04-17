@@ -14,8 +14,6 @@ use tokio::sync::{Mutex, mpsc::UnboundedSender};
 pub struct App {
     /// Is the application running?
     pub running: bool,
-    /// Counter.
-    pub counter: u8,
     /// Event handler.
     pub events: EventHandler,
 
@@ -29,7 +27,6 @@ impl App {
     pub fn new(states: Arc<Mutex<AppStates>>, command_tx: UnboundedSender<Command>) -> Self {
         Self {
             running: true,
-            counter: 0,
             events: EventHandler::new(),
             states,
             command_tx,
@@ -51,8 +48,6 @@ impl App {
                     _ => {}
                 },
                 Event::App(app_event) => match app_event {
-                    AppEvent::Increment => self.increment_counter(),
-                    AppEvent::Decrement => self.decrement_counter(),
                     AppEvent::Quit => self.quit(),
                 },
             }
@@ -67,8 +62,12 @@ impl App {
             KeyCode::Char('c' | 'C') if key_event.modifiers == KeyModifiers::CONTROL => {
                 self.events.send(AppEvent::Quit)
             }
-            KeyCode::Right => self.events.send(AppEvent::Increment),
-            KeyCode::Left => self.events.send(AppEvent::Decrement),
+            KeyCode::Enter => self.events.send(AppEvent::Enqueue),
+            KeyCode::Char(' ') => self.events.send(AppEvent::TogglePlay),
+            KeyCode::Char('s') => self.events.send(AppEvent::Next),
+            KeyCode::Char('p') => self.events.send(AppEvent::Prev),
+            KeyCode::Right => self.events.send(AppEvent::SeekForward),
+            KeyCode::Left => self.events.send(AppEvent::SeekBackward),
             // Other handlers you could add here.
             _ => {}
         }
