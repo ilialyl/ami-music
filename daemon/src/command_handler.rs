@@ -1,5 +1,7 @@
+use std::sync::Arc;
+
 use anyhow::Result;
-use tokio::sync::broadcast;
+use tokio::sync::{Mutex, broadcast};
 
 use crate::{
     commands::{Command, LibraryCommand, PlaybackCommand, QueueCommand},
@@ -9,7 +11,7 @@ use crate::{
 
 pub async fn handle_command(
     command: Command,
-    state: &mut AppState,
+    state: Arc<Mutex<AppState>>,
     connection_tx: &broadcast::Sender<String>,
 ) -> Result<()> {
     match command {
@@ -21,32 +23,50 @@ pub async fn handle_command(
 
 pub async fn handle_playback_command(
     command: PlaybackCommand,
-    state: &mut AppState,
+    state: Arc<Mutex<AppState>>,
     tx: &broadcast::Sender<String>,
 ) -> Result<()> {
     match command {
-        PlaybackCommand::Play => state.orchestrator.playback.play().await,
+        PlaybackCommand::Play => state.lock().await.orchestrator.playback.play(),
 
-        PlaybackCommand::Pause => state.orchestrator.playback.pause().await,
+        PlaybackCommand::Pause => state.lock().await.orchestrator.playback.pause(),
 
-        PlaybackCommand::TogglePlay => state.orchestrator.playback.toggle_play(),
+        PlaybackCommand::TogglePlay => state.lock().await.orchestrator.playback.toggle_play(),
 
-        PlaybackCommand::SetPosition(pos) => state.orchestrator.playback.set_position(pos)?,
-
-        PlaybackCommand::Seek { offset_seconds } => {
-            state.orchestrator.playback.seek(offset_seconds)?
+        PlaybackCommand::SetPosition(pos) => {
+            state.lock().await.orchestrator.playback.set_position(pos)?
         }
 
-        PlaybackCommand::Restart => state.orchestrator.playback.seek(0)?,
+        PlaybackCommand::Seek { offset_seconds } => state
+            .lock()
+            .await
+            .orchestrator
+            .playback
+            .seek(offset_seconds)?,
 
-        PlaybackCommand::IncreaseVol { step } => state.orchestrator.playback.increase_volume(step),
+        PlaybackCommand::Restart => state.lock().await.orchestrator.playback.seek(0)?,
 
-        PlaybackCommand::DecreaseVol { step } => state.orchestrator.playback.decrease_volume(step),
+        PlaybackCommand::IncreaseVol { step } => state
+            .lock()
+            .await
+            .orchestrator
+            .playback
+            .increase_volume(step),
 
-        PlaybackCommand::SetVolume { value } => state.orchestrator.playback.set_volume(value),
+        PlaybackCommand::DecreaseVol { step } => state
+            .lock()
+            .await
+            .orchestrator
+            .playback
+            .decrease_volume(step),
+
+        PlaybackCommand::SetVolume { value } => {
+            state.lock().await.orchestrator.playback.set_volume(value)
+        }
     };
 
-    let event = ServerEvent::SendPlayerSnapshot(state.orchestrator.playback.get_snapshot());
+    let event =
+        ServerEvent::SendPlayerSnapshot(state.lock().await.orchestrator.playback.get_snapshot());
     let json = serde_json::to_string(&event)?;
     let _ = tx.send(json);
 
@@ -55,21 +75,23 @@ pub async fn handle_playback_command(
 
 pub async fn handle_queue_command(
     command: QueueCommand,
-    state: &mut AppState,
+    state: Arc<Mutex<AppState>>,
     tx: &broadcast::Sender<String>,
 ) -> Result<()> {
     match command {
-        QueueCommand::Enqueue { track_id } => state.orchestrator.enqueue(track_id).await?,
-        QueueCommand::Prepend { track_id } => state.orchestrator.prepend(track_id),
-        QueueCommand::Dequeue { index } => state.orchestrator.dequeue(index),
-        QueueCommand::Next => state.orchestrator.next().await?,
-        QueueCommand::Prev => state.orchestrator.prev().await?,
-        QueueCommand::Shuffle => state.orchestrator.shuffle(),
-        QueueCommand::Clear => state.orchestrator.clear(),
+        QueueCommand::Enqueue { track_id } => {
+            state.lock().await.orchestrator.enqueue(track_id).await?
+        }
+        QueueCommand::Prepend { track_id } => state.lock().await.orchestrator.prepend(track_id),
+        QueueCommand::Dequeue { index } => state.lock().await.orchestrator.dequeue(index),
+        QueueCommand::Next => state.lock().await.orchestrator.next().await?,
+        QueueCommand::Prev => state.lock().await.orchestrator.prev().await?,
+        QueueCommand::Shuffle => state.lock().await.orchestrator.shuffle(),
+        QueueCommand::Clear => state.lock().await.orchestrator.clear(),
         QueueCommand::Fetch => {}
     };
 
-    let event = ServerEvent::SendQueue(state.orchestrator.queue.clone());
+    let event = ServerEvent::SendQueue(state.lock().await.orchestrator.queue.clone());
     let json = serde_json::to_string(&event)?;
     let _ = tx.send(json);
 
@@ -78,12 +100,13 @@ pub async fn handle_queue_command(
 
 pub async fn handle_library_command(
     command: LibraryCommand,
-    state: &mut AppState,
+    state: Arc<Mutex<AppState>>,
     tx: &broadcast::Sender<String>,
 ) -> Result<()> {
     match command {
         LibraryCommand::Fetch => {
-            let event = ServerEvent::SendLibrary(state.orchestrator.library.tracks.clone());
+            let event =
+                ServerEvent::SendLibrary(state.lock().await.orchestrator.library.tracks.clone());
             let json = serde_json::to_string(&event)?;
             let _ = tx.send(json);
         }

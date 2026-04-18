@@ -7,7 +7,7 @@ use ami_core::{
 };
 use anyhow::Result;
 use rodio::Player;
-use tokio::sync::broadcast;
+use tokio::{sync::broadcast, time::sleep};
 
 use crate::internal_events::InternalEvent;
 
@@ -33,15 +33,11 @@ impl Orchestrator {
         internal_event_tx: Arc<broadcast::Sender<InternalEvent>>,
     ) {
         loop {
-            if player.empty() {
-                tokio::time::sleep(Duration::from_millis(200)).await;
-                continue;
-            }
-
             let p = Arc::clone(&player);
-            tokio::task::spawn_blocking(move || p.sleep_until_end())
-                .await
-                .unwrap();
+
+            p.sleep_until_end();
+
+            sleep(Duration::from_secs(3)).await;
 
             let _ = internal_event_tx.send(InternalEvent::PlayerEmpty);
             log::debug!("Sent PlayerEmpty");
@@ -56,10 +52,10 @@ impl Orchestrator {
                 && let Some(track) = self.queue.current_track.as_ref()
             {
                 self.playback.load_track(&track.pathbuf)?;
-                self.playback.play().await;
+                self.playback.play();
             } else if self.queue.current_track.is_some() && self.playback.player.empty() {
                 self.playback.load_track(&track.pathbuf)?;
-                self.playback.play().await;
+                self.playback.play();
             }
         }
 
@@ -82,7 +78,7 @@ impl Orchestrator {
         {
             self.playback.player.clear();
             self.playback.load_track(&track.pathbuf)?;
-            self.playback.play().await;
+            self.playback.play();
         }
 
         Ok(())
@@ -94,7 +90,7 @@ impl Orchestrator {
         {
             self.playback.player.clear();
             self.playback.load_track(&track.pathbuf)?;
-            self.playback.play().await;
+            self.playback.play();
         }
 
         Ok(())

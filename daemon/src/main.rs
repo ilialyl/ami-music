@@ -35,10 +35,10 @@ async fn main() -> Result<()> {
 
     let player = state.lock().await.orchestrator.playback.player.clone();
 
-    tokio::spawn(Orchestrator::watch_track_end(
-        player,
-        internal_event_tx.clone(),
-    ));
+    let internal_event_tx_clone = internal_event_tx.clone();
+    tokio::task::spawn_blocking(move || {
+        Orchestrator::watch_track_end(player, internal_event_tx_clone)
+    });
 
     let listener = TcpListener::bind(ADDR).await.unwrap();
     println!("Server listening on {ADDR}");
@@ -89,9 +89,11 @@ async fn handle_connection(
                 match msg {
                     Some(Ok(Message::Text(text))) => {
                         if let Ok(cmd) = serde_json::from_str::<Command>(&text) {
-                            let mut state = state.lock().await;
-                            // Handle commands. Mutate state and send messages to the local broadcast channel if needed.
-                            handle_command(cmd, &mut state, &connection_tx).await?;
+                            log::debug!("Received a message from client: {}", text);
+                            {
+                                // Handle commands. Mutate state and send messages to the local broadcast channel if needed.
+                                handle_command(cmd, state.clone(), &connection_tx).await?;
+                            }
                     }}
                     // Client disconnected or error
                     _ => break,
@@ -107,6 +109,7 @@ async fn handle_connection(
 
             internal_event = internal_event_rx.recv() => {
                 if let Ok(event) = internal_event {
+                    log::debug!("Internal event: {:?}", event);
                     let mut state = state.lock().await;
                     handle_internal_event(event, &mut state, &connection_tx).await?;
                 }

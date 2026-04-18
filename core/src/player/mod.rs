@@ -36,11 +36,11 @@ impl Playback {
         Ok(())
     }
 
-    pub async fn play(&self) {
+    pub fn play(&self) {
         self.player.play();
     }
 
-    pub async fn pause(&self) {
+    pub fn pause(&self) {
         self.player.pause();
     }
 
