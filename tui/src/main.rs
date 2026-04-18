@@ -2,7 +2,7 @@ use std::{path::PathBuf, sync::Arc, time::SystemTime};
 
 use ami_core::{library::TrackId, track::Track};
 use ami_daemon::{
-    commands::{Command, LibraryCommand},
+    commands::{Command, LibraryCommand, PlaybackCommand, QueueCommand},
     events::ServerEvent,
 };
 use color_eyre::eyre::Result;
@@ -56,11 +56,22 @@ async fn connect(
 ) -> Result<()> {
     let (mut ws_sink, mut ws_stream) = ws.split();
 
-    // Initial fetch command
-    let json = serde_json::to_string(&Command::Library(LibraryCommand::Fetch))?;
-    ws_sink
-        .send(tokio_tungstenite::tungstenite::Message::Text(json.into()))
-        .await?;
+    // Initial fetch commands
+    let commands = vec![
+        Command::Library(LibraryCommand::Fetch),
+        Command::Queue(QueueCommand::Fetch),
+        Command::Playback(PlaybackCommand::GetSnapshot),
+    ];
+    let jsons: Vec<String> = commands
+        .iter()
+        .filter_map(|c| serde_json::to_string(c).ok())
+        .collect();
+
+    for j in &jsons {
+        ws_sink
+            .send(tokio_tungstenite::tungstenite::Message::Text(j.into()))
+            .await?;
+    }
 
     loop {
         tokio::select! {

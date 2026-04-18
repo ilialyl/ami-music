@@ -63,6 +63,7 @@ pub async fn handle_playback_command(
         PlaybackCommand::SetVolume { value } => {
             state.lock().await.orchestrator.playback.set_volume(value)
         }
+        PlaybackCommand::GetSnapshot => {}
     };
 
     let event =

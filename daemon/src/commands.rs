@@ -22,6 +22,7 @@ pub enum PlaybackCommand {
     DecreaseVol { step: f32 },
     SetVolume { value: f32 },
     // SetLoop,
+    GetSnapshot,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
