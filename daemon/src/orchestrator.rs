@@ -44,6 +44,8 @@ impl Orchestrator {
         }
     }
 
+    pub async fn load_and_serve_cover_art() {}
+
     pub async fn enqueue(&mut self, id: TrackId) -> Result<()> {
         if let Some(track) = self.library.tracks.get(&id) {
             self.queue.enqueue(track.clone());

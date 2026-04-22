@@ -9,6 +9,7 @@ use crate::{
     ui::{library::Library, now_playing::NowPlaying, queue::Queue},
 };
 
+pub mod cover_art;
 pub mod library;
 pub mod now_playing;
 pub mod queue;

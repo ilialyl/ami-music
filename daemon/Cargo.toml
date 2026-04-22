@@ -18,3 +18,4 @@ tokio-tungstenite = "0.29.0"
 rodio = { git = "https://github.com/RustAudio/rodio.git", features = ["symphonia-libopus"] }
 fern = "0.7.1"
 humantime = "2.3.0"
+url = { version = "2.5.8", features = ["serde"] }

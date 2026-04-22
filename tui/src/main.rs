@@ -7,6 +7,7 @@ use ami_daemon::{
 };
 use color_eyre::eyre::Result;
 use futures::{SinkExt, StreamExt};
+use ratatui_image::picker::Picker;
 use tokio::{
     net::TcpStream,
     sync::{
@@ -16,7 +17,7 @@ use tokio::{
 };
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 
-use crate::{app::App, state::AppStates};
+use crate::{app::App, state::AppStates, ui::cover_art::CoverArt};
 
 pub mod app;
 pub mod event;
@@ -42,7 +43,7 @@ async fn main() -> Result<()> {
 
     let app = App::new(states.clone(), tx);
 
-    tokio::spawn(connect(ws, rx, states));
+    tokio::spawn(connect(ws, rx, states, app.image_picker.clone()));
     let result = app.run(terminal).await;
     ratatui::restore();
 
@@ -53,6 +54,7 @@ async fn connect(
     ws: WebSocketStream<MaybeTlsStream<TcpStream>>,
     mut rx: UnboundedReceiver<Command>,
     states: Arc<Mutex<AppStates>>,
+    image_picker: Arc<Picker>,
 ) -> Result<()> {
     let (mut ws_sink, mut ws_stream) = ws.split();
 
@@ -109,6 +111,14 @@ async fn connect(
                                     let mut states = states.lock().await;
                                     states.player_snapshot = snapshot;
                                 },
+                                ServerEvent::SendCoverArtUrl(url) => {
+                                    if let Some(protocol) = CoverArt::parse_cover_art(url, image_picker.clone()).await? {
+                                        let mut states = states.lock().await;
+                                        states.cover_art = Some(protocol);
+                                    }
+
+
+                                }
                             }
                         }
                     },

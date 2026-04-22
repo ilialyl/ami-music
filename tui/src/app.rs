@@ -8,6 +8,7 @@ use crate::{
 use ami_daemon::commands::Command;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::DefaultTerminal;
+use ratatui_image::picker::Picker;
 use tokio::sync::{Mutex, mpsc::UnboundedSender};
 
 /// Application.
@@ -21,6 +22,8 @@ pub struct App {
     pub states: Arc<Mutex<AppStates>>,
 
     pub command_tx: UnboundedSender<Command>,
+
+    pub image_picker: Arc<Picker>,
 }
 
 impl App {
@@ -31,6 +34,9 @@ impl App {
             events: EventHandler::new(),
             states,
             command_tx,
+            image_picker: Arc::new(
+                Picker::from_query_stdio().unwrap_or_else(|_| Picker::halfblocks()),
+            ),
         }
     }
 
