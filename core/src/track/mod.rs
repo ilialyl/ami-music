@@ -49,6 +49,7 @@ impl Track {
             metadata.artist = primary_tag.artist().map(|s| s.into_owned());
             metadata.disc_number = primary_tag.track();
             metadata.genre = primary_tag.genre().map(|s| s.into_owned());
+            metadata.year = primary_tag.year();
         }
 
         Ok(metadata)

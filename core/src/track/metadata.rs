@@ -8,4 +8,5 @@ pub struct Metadata {
     pub artist: Option<String>,
     pub disc_number: Option<u32>,
     pub genre: Option<String>,
+    pub year: Option<u32>,
 }
