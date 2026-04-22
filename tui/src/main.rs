@@ -36,7 +36,7 @@ async fn main() -> Result<()> {
     let states = Arc::new(Mutex::new(AppStates::default()));
 
     let (ws, _) = tokio_tungstenite::connect_async(URL).await?;
-    println!("Connected to {URL}");
+    log::debug!("Connected to {URL}");
 
     let (tx, rx) = mpsc::unbounded_channel::<Command>();
 

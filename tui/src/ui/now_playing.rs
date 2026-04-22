@@ -1,8 +1,9 @@
+use std::ops::Mul;
+
 use ratatui::{
     buffer::Buffer,
-    layout::{Alignment, Rect},
-    style::{Color, Stylize},
-    widgets::{Block, BorderType, Paragraph, Widget},
+    layout::{Constraint, Rect},
+    widgets::{Paragraph, Widget},
 };
 
 use crate::app::App;
@@ -19,26 +20,38 @@ impl<'a> Widget for NowPlaying<'a> {
         if let Ok(states) = self.app.states.try_lock()
             && let Some(track) = states.queue_snapshot.current_track.as_ref()
         {
-            let block = Block::bordered()
-                .title("test")
-                .title_alignment(Alignment::Center)
-                .border_type(BorderType::Rounded);
+            let desc_lines = [
+                Some(track.metadata.title.clone()),
+                Some(
+                    track
+                        .metadata
+                        .artist
+                        .clone()
+                        .unwrap_or("Unknown Artist".into()),
+                ),
+                match (track.metadata.album.clone(), track.metadata.year) {
+                    (Some(album), Some(year)) => Some(format!("{} ({})", album, year)),
+                    (Some(album), None) => Some(album.into()),
+                    (None, Some(year)) => Some(format!("{}", year)),
+                    (None, None) => None,
+                },
+            ];
 
-            let text = format!(
-                "{}\n\
-                            Press `Esc`, `Ctrl-C` or `q` to stop running.\n\
-                            Press left and right to increment and decrement the counter respectively.\n\
-                        ",
-                track.metadata.title
+            let flat_desc = desc_lines.into_iter().flatten().collect::<Vec<String>>();
+            let spacing = (1..=5)
+                .rev()
+                .find(|&x| (area.height / 2) >= (flat_desc.len().mul(x).saturating_sub(1) as u16))
+                .unwrap_or(1);
+
+            let sep = "\n".repeat(spacing);
+            let desc = flat_desc.join(&sep);
+
+            let paragraph = Paragraph::new(desc).centered();
+
+            paragraph.render(
+                area.centered_vertically(Constraint::Length(area.height)),
+                buf,
             );
-
-            let paragraph = Paragraph::new(text)
-                .block(block)
-                .fg(Color::Cyan)
-                .bg(Color::Black)
-                .centered();
-
-            paragraph.render(area, buf);
         }
     }
 }
