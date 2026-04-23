@@ -19,3 +19,4 @@ rodio = { git = "https://github.com/RustAudio/rodio.git", features = ["symphonia
 fern = "0.7.1"
 humantime = "2.3.0"
 url = { version = "2.5.8", features = ["serde"] }
+tower-http = { version = "0.6.8", features = ["fs"] }

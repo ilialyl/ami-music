@@ -1,6 +1,6 @@
 use std::{net::SocketAddr, sync::Arc};
 
-use ami_core::config::Config;
+use ami_core::{cache::get_thumbnail_cache_path, config::Config};
 use ami_daemon::{
     command_handler::handle_command,
     commands::Command,
@@ -10,16 +10,19 @@ use ami_daemon::{
     states::AppState,
 };
 use anyhow::Result;
+use axum::Router;
 use futures_util::{SinkExt, StreamExt};
 use tokio::{
     net::{TcpListener, TcpStream},
     sync::{Mutex, broadcast},
 };
 use tokio_tungstenite::{accept_async, tungstenite::Message};
+use tower_http::services::ServeDir;
 
 // How many messages the broadcast channel can buffer
 const CHANNEL_CAPACITY: usize = 32;
-const ADDR: &str = "0.0.0.0:7878";
+const DAEMON_ADDR: &str = "0.0.0.0:7878";
+const COVER_ADDR: &str = "0.0.0.0:7879";
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -40,8 +43,20 @@ async fn main() -> Result<()> {
         Orchestrator::watch_track_end(player, internal_event_tx_clone)
     });
 
-    let listener = TcpListener::bind(ADDR).await.unwrap();
-    println!("Server listening on {ADDR}");
+    let cover_art_dir_service =
+        Router::new().fallback_service(ServeDir::new(get_thumbnail_cache_path()?));
+
+    tokio::spawn(async {
+        axum::serve(
+            TcpListener::bind(COVER_ADDR).await.unwrap(),
+            cover_art_dir_service,
+        )
+        .await
+        .unwrap();
+    });
+
+    let listener = TcpListener::bind(DAEMON_ADDR).await.unwrap();
+    println!("Server listening on {DAEMON_ADDR}");
 
     // A broadcast channel: one sender, many receivers (one per client)
     let (connection_tx, _) = broadcast::channel::<String>(CHANNEL_CAPACITY);
