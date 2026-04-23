@@ -4,7 +4,6 @@ use ami_core::{
     library::TrackId, player::playback_snapshot::PlayerSnapshot, queue::Queue, track::Track,
 };
 use serde::{Deserialize, Serialize};
-use url::Url;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type", content = "data")]

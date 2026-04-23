@@ -109,7 +109,7 @@ async fn connect(
                                     if let Some(current_track) = queue.current_track.as_ref() {
                                             if let Some(thumb_path) = current_track.metadata.thumbnail_path.as_ref() {
                                                 if let Some(filename) = thumb_path.file_name().and_then(|s| s.to_str()) {
-                                                    let url = Url::parse(&format!("http://0.0.0.0:7879/{}", filename))?;
+                                                    let url = Url::parse(&format!("{}/{}", COVER_URL, filename))?;
                                                     let states = states.clone();
                                                     let picker = image_picker.clone();
                                                     tokio::spawn(async move {

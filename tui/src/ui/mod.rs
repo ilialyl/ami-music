@@ -3,7 +3,6 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     widgets::{ListState, StatefulWidget, TableState, Widget},
 };
-use ratatui_image::protocol::StatefulProtocol;
 
 use crate::{
     app::App,
