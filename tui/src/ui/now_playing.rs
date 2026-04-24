@@ -49,7 +49,7 @@ impl<'a> Widget for NowPlaying<'a> {
             let paragraph = Paragraph::new(desc).centered();
 
             paragraph.render(
-                area.centered_vertically(Constraint::Length(area.height)),
+                area.centered_vertically(Constraint::Length(area.height / 2)),
                 buf,
             );
         }

@@ -1,6 +1,6 @@
 use ratatui::{
-    style::Style,
-    widgets::{List, ListItem, ListState, StatefulWidget},
+    style::{Style, Stylize},
+    widgets::{Block, List, ListItem, ListState, StatefulWidget},
 };
 
 use crate::app::App;
@@ -26,7 +26,10 @@ impl<'a> StatefulWidget for Queue<'a> {
                 .collect();
 
             let highlight = Style::default().reversed();
-            let list = List::new(entries).highlight_style(highlight);
+            let list = List::new(entries)
+                .highlight_style(highlight)
+                .block(Block::new().title("Queue").bold())
+                .not_bold();
 
             StatefulWidget::render(list, area, buf, state);
         }

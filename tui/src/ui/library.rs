@@ -1,6 +1,7 @@
 use ratatui::{
     layout::Constraint,
-    style::Style,
+    style::{Style, Stylize},
+    text::ToText,
     widgets::{Cell, Row, StatefulWidget, Table, TableState},
 };
 
@@ -21,7 +22,7 @@ impl<'a> StatefulWidget for Library<'a> {
     ) {
         if let Ok(states) = self.app.states.try_lock() {
             let library = &states.library_snapshot;
-            let header = ["Title", "Artist"]
+            let header = ["Title".to_text().bold(), "Artist".to_text().bold()]
                 .into_iter()
                 .map(Cell::from)
                 .collect::<Row>();

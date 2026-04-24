@@ -29,6 +29,8 @@ impl Widget for &App {
                 Constraint::Percentage(50),
                 Constraint::Percentage(20),
             ])
+            .margin(1)
+            .spacing(1)
             .split(area);
 
         let playing_panel = Layout::default()
