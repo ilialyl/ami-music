@@ -11,6 +11,7 @@ lofty = "0.22.4"
 log = "0.4.29"
 mpris-server = "0.9.0"
 rand = "0.10.0"
+rayon = "1.12.0"
 rodio = { git = "https://github.com/RustAudio/rodio.git", features = ["symphonia-libopus"] }
 serde = { version = "1.0.228", features = ["derive", "rc"] }
 tokio = { version = "1.50.0", features = ["full"] }

@@ -1,5 +1,6 @@
 use std::{collections::HashMap, fs::read_dir, str::FromStr, sync::Arc};
 
+use rayon::iter::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
 use serde::{Deserialize, Serialize};
 
 use crate::{config::LibraryConfig, library::helper::is_rodio_supported, track::Track};
@@ -43,9 +44,9 @@ impl Library {
 
         let track_vec: Vec<Track> = config
             .directories
-            .iter()
+            .par_iter()
             .filter(|path| path.is_dir())
-            .flat_map(|dir| read_dir(dir).into_iter().flatten())
+            .flat_map(|dir| read_dir(dir).into_iter().flatten().par_bridge())
             .filter_map(|entry| entry.ok())
             .map(|entry| entry.path())
             .filter_map(|path| match is_rodio_supported(&path) {
