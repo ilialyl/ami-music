@@ -90,16 +90,17 @@ impl Orchestrator {
         self.queue.dequeue(index);
     }
 
-    pub async fn next(&mut self) -> Result<()> {
+    pub async fn next(&mut self) -> Result<bool> {
         if self.queue.next()
             && let Some(track) = self.queue.current_track.as_ref()
         {
             self.playback.player.clear();
             self.load_track(&track.pathbuf)?;
             self.playback.play();
+            Ok(true)
+        } else {
+            Ok(false)
         }
-
-        Ok(())
     }
 
     pub async fn prev(&mut self) -> Result<()> {

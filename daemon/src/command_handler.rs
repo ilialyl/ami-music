@@ -85,7 +85,9 @@ pub async fn handle_queue_command(
         }
         QueueCommand::Prepend { track_id } => state.lock().await.orchestrator.prepend(track_id),
         QueueCommand::Dequeue { index } => state.lock().await.orchestrator.dequeue(index),
-        QueueCommand::Next => state.lock().await.orchestrator.next().await?,
+        QueueCommand::Next => {
+            state.lock().await.orchestrator.next().await?;
+        }
         QueueCommand::Prev => state.lock().await.orchestrator.prev().await?,
         QueueCommand::Shuffle => state.lock().await.orchestrator.shuffle(),
         QueueCommand::Clear => state.lock().await.orchestrator.clear(),

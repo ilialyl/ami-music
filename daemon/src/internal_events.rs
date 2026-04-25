@@ -14,13 +14,14 @@ pub async fn handle_internal_event(
 ) -> Result<()> {
     match event {
         InternalEvent::TrackEnded => {
-            state.orchestrator.next().await?;
-            let events = [
-                ServerEvent::SendPlayerSnapshot(state.orchestrator.playback.get_snapshot()),
-                ServerEvent::SendQueue(state.orchestrator.queue.clone()),
-            ];
-            for e in events {
-                let _ = connection_tx.send(serde_json::to_string(&e)?);
+            if state.orchestrator.next().await? {
+                let events = [
+                    ServerEvent::SendPlayerSnapshot(state.orchestrator.playback.get_snapshot()),
+                    ServerEvent::SendQueue(state.orchestrator.queue.clone()),
+                ];
+                for e in events {
+                    let _ = connection_tx.send(serde_json::to_string(&e)?);
+                }
             }
         }
     }
