@@ -121,7 +121,6 @@ async fn handle_connection(
 
             internal_event = internal_event_rx.recv() => {
                 if let Ok(event) = internal_event {
-                    log::debug!("Internal event: {:?}", event);
                     let mut state = state.lock().await;
                     handle_internal_event(event, &mut state, &connection_tx).await?;
                 }

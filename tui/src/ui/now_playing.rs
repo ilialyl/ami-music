@@ -50,7 +50,7 @@ impl<'a> Widget for NowPlaying<'a> {
             let sep = "\n".repeat(spacing);
             let desc = flat_desc.join(&sep);
 
-            let paragraph = Paragraph::new(desc).centered();
+            let paragraph = Paragraph::new(desc);
 
             paragraph.render(
                 area.centered_vertically(Constraint::Length(area.height / 2)),

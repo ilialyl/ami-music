@@ -51,7 +51,7 @@ impl Widget for &App {
             let playing_desc = NowPlaying {
                 daemon_states: &daemon_states,
             };
-            playing_desc.render(playing_panel[1], buf);
+            playing_desc.render(playing_panel[1].inner(Margin::new(1, 0)), buf);
 
             let queue = Queue {
                 daemon_states: &daemon_states,
