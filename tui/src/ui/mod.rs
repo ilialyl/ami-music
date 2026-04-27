@@ -25,8 +25,8 @@ impl Widget for &App {
         let layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(vec![
-                Constraint::Percentage(30),
-                Constraint::Percentage(50),
+                Constraint::Percentage(25),
+                Constraint::Fill(1),
                 Constraint::Percentage(20),
             ])
             .margin(1)
@@ -45,7 +45,7 @@ impl Widget for &App {
             let cover_art = CoverArt {};
 
             if let Some(protocol) = daemon_states.cover_art.as_mut() {
-                cover_art.render(playing_panel[0].inner(Margin::new(1, 1)), buf, protocol);
+                cover_art.render(playing_panel[0], buf, protocol);
             }
 
             let playing_desc = NowPlaying {
@@ -61,7 +61,11 @@ impl Widget for &App {
             let library = Library {
                 daemon_states: &daemon_states,
             };
-            library.render(layout[1], buf, &mut TableState::default());
+            library.render(
+                layout[1].inner(Margin::new(1, 0)),
+                buf,
+                &mut TableState::default(),
+            );
         }
     }
 }

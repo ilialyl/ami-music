@@ -46,7 +46,7 @@ impl CoverArt {
 impl StatefulWidget for CoverArt {
     type State = StatefulProtocol;
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let widget = StatefulImage::default().resize(Resize::Fit(None));
+        let widget = StatefulImage::default().resize(Resize::Scale(None));
         StatefulWidget::render(widget, area, buf, state);
     }
 }
