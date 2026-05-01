@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use ami_core::library::TrackId;
+use ami_core::{library::TrackId, queue::loop_mode::LoopMode};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
@@ -21,7 +21,6 @@ pub enum PlaybackCommand {
     IncreaseVol { step: f32 },
     DecreaseVol { step: f32 },
     SetVolume { value: f32 },
-    // SetLoop,
     GetSnapshot,
 }
 
@@ -34,6 +33,7 @@ pub enum QueueCommand {
     Prev,
     Shuffle,
     Clear,
+    SetLoopMode(LoopMode),
     Fetch,
 }
 

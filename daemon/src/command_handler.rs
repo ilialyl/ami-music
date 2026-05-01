@@ -63,6 +63,7 @@ pub async fn handle_playback_command(
         PlaybackCommand::SetVolume { value } => {
             state.read().await.orchestrator.playback.set_volume(value)
         }
+
         PlaybackCommand::GetSnapshot => {}
     };
 
@@ -94,6 +95,7 @@ pub async fn handle_queue_command(
         QueueCommand::Prev => state.write().await.orchestrator.prev().await?,
         QueueCommand::Shuffle => state.write().await.orchestrator.shuffle(),
         QueueCommand::Clear => state.write().await.orchestrator.clear(),
+        QueueCommand::SetLoopMode(mode) => state.write().await.orchestrator.queue.loop_mode = mode,
         QueueCommand::Fetch => {}
     };
 

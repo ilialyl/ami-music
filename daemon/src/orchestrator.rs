@@ -46,6 +46,15 @@ impl Orchestrator {
         Ok(())
     }
 
+    pub fn rewind(&self) -> Result<()> {
+        if let Some(track) = self.queue.current_track.as_ref() {
+            self.playback.player.clear();
+            self.playback.load_track(&track.pathbuf)?;
+        }
+
+        Ok(())
+    }
+
     pub async fn send_player_position(
         player: Arc<Player>,
         internal_event_tx: Arc<broadcast::Sender<InternalEvent>>,
