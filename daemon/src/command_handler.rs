@@ -85,7 +85,11 @@ pub async fn handle_queue_command(
 ) -> Result<()> {
     match command {
         QueueCommand::Enqueue { track_id } => {
-            state.write().await.orchestrator.enqueue(track_id).await?
+            let mut state = state.write().await;
+            state.orchestrator.enqueue(track_id).await?;
+            if state.orchestrator.playback.player.empty() {
+                state.orchestrator.next().await?;
+            }
         }
         QueueCommand::Prepend { track_id } => state.write().await.orchestrator.prepend(track_id),
         QueueCommand::Dequeue { index } => state.write().await.orchestrator.dequeue(index),
