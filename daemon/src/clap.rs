@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::{Arg, Command};
+use clap::Command;
 
 pub fn build_cli() -> Command {
     Command::new("amid")

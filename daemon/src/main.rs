@@ -68,10 +68,10 @@ fn handle_stop() -> Result<()> {
 async fn run_daemon() -> Result<()> {
     log::debug!("Daemon starting...");
 
-    let (internal_event_tx, _) = broadcast::channel::<InternalEvent>(CHANNEL_CAPACITY);
-    let internal_event_tx = Arc::new(internal_event_tx);
+    let (internal_event_tx, internal_event_rx) =
+        tokio::sync::mpsc::unbounded_channel::<InternalEvent>();
 
-    let shared_state = new_shared_state(Arc::clone(&internal_event_tx))?;
+    let shared_state = new_shared_state(internal_event_tx.clone())?;
     let config = Config::load()?;
 
     shared_state
@@ -83,7 +83,7 @@ async fn run_daemon() -> Result<()> {
 
     services::run_thumbnail_service()?;
 
-    let tx = Arc::clone(&internal_event_tx);
+    let tx = internal_event_tx.clone();
     let player = Arc::clone(&shared_state.read().await.orchestrator.playback.player);
     tokio::spawn(async move { Orchestrator::send_player_position(player, tx).await });
 
@@ -94,7 +94,7 @@ async fn run_daemon() -> Result<()> {
     let (connection_tx, _) = broadcast::channel::<String>(CHANNEL_CAPACITY);
     let connection_tx = Arc::new(connection_tx); // Share the sender across tasks
 
-    let ws_service =
-        WebSocketService::new(listener, connection_tx, internal_event_tx, shared_state);
+    let mut ws_service =
+        WebSocketService::new(listener, connection_tx, internal_event_rx, shared_state);
     ws_service.start().await
 }

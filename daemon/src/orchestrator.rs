@@ -7,7 +7,7 @@ use ami_core::{
 };
 use anyhow::Result;
 use rodio::{Player, source::EmptyCallback};
-use tokio::sync::broadcast;
+use tokio::sync::mpsc::UnboundedSender;
 
 use crate::internal_events::InternalEvent;
 
@@ -15,11 +15,11 @@ pub struct Orchestrator {
     pub playback: Arc<Playback>,
     pub queue: Queue,
     pub library: Library,
-    pub internal_event_tx: Arc<broadcast::Sender<InternalEvent>>,
+    pub internal_event_tx: UnboundedSender<InternalEvent>,
 }
 
 impl Orchestrator {
-    pub fn new(tx: Arc<broadcast::Sender<InternalEvent>>) -> Result<Self> {
+    pub fn new(tx: UnboundedSender<InternalEvent>) -> Result<Self> {
         println!("Loading Playback...");
         let playback = Arc::new(Playback::new()?);
         println!("Loading Queue...");
@@ -37,9 +37,11 @@ impl Orchestrator {
     fn load_track(&self, audio_path: &Path) -> Result<()> {
         let tx = self.internal_event_tx.clone();
         self.playback.load_track(audio_path)?;
+        let player = self.playback.player.clone();
         self.playback
             .player
             .append(EmptyCallback::new(Box::new(move || {
+                player.clear();
                 let _ = tx.send(InternalEvent::TrackEnded);
             })));
 
@@ -57,7 +59,7 @@ impl Orchestrator {
 
     pub async fn send_player_position(
         player: Arc<Player>,
-        internal_event_tx: Arc<broadcast::Sender<InternalEvent>>,
+        internal_event_tx: UnboundedSender<InternalEvent>,
     ) {
         let mut interval = tokio::time::interval(Duration::from_millis(250));
         loop {

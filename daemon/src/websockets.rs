@@ -18,7 +18,7 @@ use crate::{
 pub struct WebSocketService {
     pub listener: TcpListener,
     pub connection_tx: Arc<broadcast::Sender<String>>,
-    pub internal_event_tx: Arc<broadcast::Sender<InternalEvent>>,
+    pub internal_event_rx: Option<tokio::sync::mpsc::UnboundedReceiver<InternalEvent>>,
     pub shared_state: SharedState,
 }
 
@@ -26,37 +26,30 @@ impl WebSocketService {
     pub fn new(
         listener: TcpListener,
         connection_tx: Arc<broadcast::Sender<String>>,
-        internal_event_tx: Arc<broadcast::Sender<InternalEvent>>,
+        internal_event_rx: tokio::sync::mpsc::UnboundedReceiver<InternalEvent>,
         shared_state: SharedState,
     ) -> Self {
         Self {
             listener,
             connection_tx,
-            internal_event_tx,
+            internal_event_rx: Some(internal_event_rx),
             shared_state,
         }
     }
 
-    pub async fn start(&self) -> Result<()> {
-        let internal_event_tx = Arc::clone(&self.internal_event_tx);
+    pub async fn start(&mut self) -> Result<()> {
+        let mut internal_event_rx = self.internal_event_rx.take().unwrap();
         let connection_tx = Arc::clone(&self.connection_tx);
         let shared_state = self.shared_state.clone();
         tokio::spawn(async move {
-            let mut internal_event_rx = internal_event_tx.subscribe();
             loop {
-                match internal_event_rx.recv().await {
-                    Ok(event) => {
-                        let mut state = shared_state.write().await;
-                        if let Err(e) =
-                            handle_internal_event(event, &mut state, &connection_tx.clone()).await
-                        {
-                            log::error!("Internal event error: {e}");
-                        }
+                if let Some(event) = internal_event_rx.recv().await {
+                    let mut state = shared_state.write().await;
+                    if let Err(e) =
+                        handle_internal_event(event, &mut state, &connection_tx.clone()).await
+                    {
+                        log::error!("Internal event error: {e}");
                     }
-                    Err(broadcast::error::RecvError::Lagged(n)) => {
-                        log::warn!("Internal event receiver lagged, dropped {n} events");
-                    }
-                    Err(broadcast::error::RecvError::Closed) => break,
                 }
             }
         });
