@@ -19,6 +19,8 @@ pub fn setup_logger() -> Result<()> {
         .level_for("lofty", log::LevelFilter::Error)
         .level_for("zbus", log::LevelFilter::Error)
         .level_for("tracing", log::LevelFilter::Error)
+        .level_for("symphonia", log::LevelFilter::Error)
+        .level_for("symphonia_core", log::LevelFilter::Error)
         .chain(fern::log_file(log_path)?)
         .apply()?;
     Ok(())

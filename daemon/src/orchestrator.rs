@@ -62,7 +62,7 @@ impl Orchestrator {
     pub fn rewind(&self) -> Result<()> {
         if let Some(track) = self.queue.current_track.as_ref() {
             self.playback.player.clear();
-            self.playback.load_track(&track.pathbuf)?;
+            self.load_track(&track.pathbuf)?;
         }
 
         Ok(())
@@ -83,17 +83,13 @@ impl Orchestrator {
     }
 
     pub async fn enqueue(&mut self, id: TrackId) -> Result<()> {
-        if let Some(track) = self.library.tracks.get(&id) {
+        if let Some(track) = self.library.tracks.get(&id).cloned() {
             self.queue.enqueue(track.clone());
-            if self.queue.current_track.is_none()
-                && self.queue.next()
-                && let Some(track) = self.queue.current_track.as_ref()
-            {
-                self.load_track(&track.pathbuf)?;
-                self.playback.play();
+            log::debug!("Called Orchestrator::enqueue");
+            if self.queue.current_track.is_none() {
+                self.next().await?;
             } else if self.queue.current_track.is_some() && self.playback.player.empty() {
-                self.load_track(&track.pathbuf)?;
-                self.playback.play();
+                self.next().await?;
             }
         }
 

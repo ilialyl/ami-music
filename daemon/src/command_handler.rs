@@ -108,6 +108,11 @@ pub async fn handle_queue_command(
             state.orchestrator.enqueue(track_id).await?;
             if state.orchestrator.playback.player.empty() {
                 state.orchestrator.next().await?;
+                // Broadcast PlayerSnapshot
+                let event =
+                    ServerEvent::SendPlayerSnapshot(state.orchestrator.playback.get_snapshot());
+                let json = serde_json::to_string(&event)?;
+                let _ = tx.send(json);
             }
         }
         QueueCommand::Prepend { track_id } => state.write().await.orchestrator.prepend(track_id),
