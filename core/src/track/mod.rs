@@ -63,6 +63,7 @@ impl Track {
             sample_rate: tagged_file.properties().sample_rate(),
             bit_depth: tagged_file.properties().bit_depth(),
             channels: tagged_file.properties().channels(),
+            duration: tagged_file.properties().duration(),
         }
     }
 }
