@@ -1,4 +1,3 @@
-pub mod clap;
 pub mod command_handler;
 pub mod commands;
 pub mod daemon_process;
