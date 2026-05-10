@@ -7,18 +7,32 @@ use crate::services::mpris::Mpris;
 
 impl PlayerInterface for Mpris {
     async fn next(&self) -> fdo::Result<()> {
+        let mut orchestrator = self.shared_state.write().await;
+        let _ = orchestrator
+            .next()
+            .await
+            .inspect_err(|e| log::error!("{e}"));
         Ok(())
     }
 
     async fn previous(&self) -> fdo::Result<()> {
+        let mut orchestrator = self.shared_state.write().await;
+        let _ = orchestrator
+            .prev()
+            .await
+            .inspect_err(|e| log::error!("{e}"));
         Ok(())
     }
 
     async fn pause(&self) -> fdo::Result<()> {
+        let orchestrator = self.shared_state.read().await;
+        let _ = orchestrator.pause();
         Ok(())
     }
 
     async fn play_pause(&self) -> fdo::Result<()> {
+        let orchestrator = self.shared_state.read().await;
+        let _ = orchestrator.toggle_play();
         Ok(())
     }
 
@@ -27,18 +41,28 @@ impl PlayerInterface for Mpris {
     }
 
     async fn play(&self) -> fdo::Result<()> {
+        let orchestrator = self.shared_state.read().await;
+        let _ = orchestrator.play();
         Ok(())
     }
 
-    async fn seek(&self, _offset: Time) -> fdo::Result<()> {
+    async fn seek(&self, offset: Time) -> fdo::Result<()> {
+        let orchestrator = self.shared_state.read().await;
+        let _ = orchestrator.seek(offset.as_secs() as i64);
         Ok(())
     }
 
-    async fn set_position(&self, _track_id: TrackId, _position: Time) -> fdo::Result<()> {
+    async fn set_position(&self, _track_id: TrackId, position: Time) -> fdo::Result<()> {
+        let orchestrator = self.shared_state.read().await;
+        let _ = orchestrator.seek(position.as_secs() as i64);
         Ok(())
     }
     async fn position(&self) -> fdo::Result<Time> {
-        Ok(Time::ZERO)
+        let orchestrator = self.shared_state.read().await;
+
+        Ok(Time::from_millis(
+            orchestrator.player_position().as_millis() as i64,
+        ))
     }
 
     async fn open_uri(&self, _uri: String) -> fdo::Result<()> {

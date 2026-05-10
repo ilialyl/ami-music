@@ -12,6 +12,7 @@ use crate::daemon_process::PID_FILE;
 use crate::internal_events::InternalEvent;
 use crate::orchestrator::Orchestrator;
 use crate::services;
+use crate::services::mpris::Mpris;
 use crate::websockets::WebSocketService;
 
 pub type SharedState = Arc<RwLock<Orchestrator>>;
@@ -39,11 +40,17 @@ impl App {
 
         let config = Config::load()?;
 
-        self.orchestrator.write().await.library.load(config.library);
+        self.orchestrator
+            .write()
+            .await
+            .load_library_config(config.library);
+
+        let mpris = Mpris::new(self.orchestrator.clone());
+        let mpris_server = mpris.start();
 
         services::run_thumbnail_service()?;
 
-        let player = Arc::clone(&self.orchestrator.read().await.playback.player);
+        let player = Arc::clone(&self.orchestrator.read().await.clone_player_arc());
 
         let listener = TcpListener::bind(DAEMON_ADDR).await?;
         log::debug!("Server listening on {DAEMON_ADDR}");

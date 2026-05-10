@@ -118,6 +118,10 @@ impl Orchestrator {
         self.playback.set_volume(value);
     }
 
+    pub fn player_position(&self) -> Duration {
+        self.playback.player.get_pos()
+    }
+
     pub async fn send_player_position(
         player: Arc<Player>,
         connection_tx: &broadcast::Sender<String>,
