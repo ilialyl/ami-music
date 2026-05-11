@@ -6,7 +6,7 @@ use tower_http::services::ServeDir;
 
 pub mod mpris;
 
-const COVER_ADDR: &str = "0.0.0.0:7879";
+pub const COVER_ADDR: &str = "0.0.0.0:7879";
 
 pub fn run_thumbnail_service() -> Result<()> {
     let cover_art_dir_service =

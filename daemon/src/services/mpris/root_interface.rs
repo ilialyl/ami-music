@@ -39,11 +39,11 @@ impl RootInterface for Mpris {
     }
 
     async fn identity(&self) -> fdo::Result<String> {
-        Ok("Fireflyd".to_string())
+        Ok("AmiMusic".to_string())
     }
 
     async fn desktop_entry(&self) -> fdo::Result<String> {
-        Ok("Fireflyd".to_string())
+        Ok("AmiMusic".to_string())
     }
 
     async fn supported_uri_schemes(&self) -> fdo::Result<Vec<String>> {

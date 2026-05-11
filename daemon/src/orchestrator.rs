@@ -11,7 +11,7 @@ use std::{
 use ami_core::{
     config::LibraryConfig,
     library::{Library, TrackId},
-    player::{Playback, playback_snapshot::PlayerSnapshot},
+    player::{Playback, playback_snapshot::PlayerSnapshot, playback_status::PlaybackStatus},
     queue::{Queue, loop_mode::LoopMode},
     track::Track,
 };
@@ -114,12 +114,24 @@ impl Orchestrator {
         self.playback.decrease_volume(step);
     }
 
+    pub fn volume(&self) -> f32 {
+        self.playback.volume()
+    }
+
     pub fn set_volume(&self, value: f32) {
         self.playback.set_volume(value);
     }
 
     pub fn player_position(&self) -> Duration {
         self.playback.player.get_pos()
+    }
+
+    pub fn playback_status(&self) -> PlaybackStatus {
+        self.playback.playback_status()
+    }
+
+    pub fn playback_speed(&self) -> f32 {
+        self.playback.playback_speed()
     }
 
     pub async fn send_player_position(
@@ -173,6 +185,14 @@ impl Orchestrator {
         Ok(())
     }
 
+    pub fn can_go_next(&self) -> bool {
+        !self.queue.next_tracks.is_empty()
+    }
+
+    pub fn can_go_prev(&self) -> bool {
+        !self.queue.previous_tracks.is_empty()
+    }
+
     pub async fn next(&mut self) -> Result<bool> {
         if self.queue.next()
             && let Some(track) = self.queue.current_track.as_ref()
@@ -218,7 +238,7 @@ impl Orchestrator {
         self.queue.cycle_loop_mode();
     }
 
-    pub fn get_current_track(&mut self) -> Option<Arc<Track>> {
+    pub fn get_current_track(&self) -> Option<Arc<Track>> {
         self.queue.current_track.clone()
     }
 
