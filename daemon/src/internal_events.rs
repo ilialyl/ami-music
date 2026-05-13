@@ -1,4 +1,4 @@
-use crate::{events::ServerEvent, orchestrator::Orchestrator};
+use crate::{app::MprisServer, events::ServerEvent, orchestrator::Orchestrator};
 use ami_core::queue::loop_mode::LoopMode;
 use anyhow::Result;
 use tokio::sync::broadcast;
@@ -12,13 +12,14 @@ pub async fn handle_internal_event(
     event: InternalEvent,
     orchestrator: &mut Orchestrator,
     connection_tx: &broadcast::Sender<String>,
+    mpris_server: Option<MprisServer>,
 ) -> Result<()> {
     match event {
         InternalEvent::TrackEnded => {
             log::debug!("{:?} Received", event);
             match orchestrator.loop_mode() {
                 LoopMode::None => {
-                    if orchestrator.next().await? {
+                    if orchestrator.next(&mpris_server).await? {
                         let events = [
                             ServerEvent::SendPlayerSnapshot(orchestrator.get_player_snapshot()),
                             ServerEvent::SendQueue(orchestrator.clone_queue()),
@@ -30,9 +31,9 @@ pub async fn handle_internal_event(
                 }
                 LoopMode::Track => orchestrator.rewind()?,
                 LoopMode::Queue => {
-                    if orchestrator.get_current_track().is_some() {
+                    if orchestrator.current_track().is_some() {
                         orchestrator.restart_queue();
-                        if orchestrator.next().await? {
+                        if orchestrator.next(&mpris_server).await? {
                             let events = [
                                 ServerEvent::SendPlayerSnapshot(orchestrator.get_player_snapshot()),
                                 ServerEvent::SendQueue(orchestrator.clone_queue()),

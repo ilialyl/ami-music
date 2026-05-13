@@ -16,10 +16,17 @@ use ami_core::{
     track::Track,
 };
 use anyhow::Result;
+use mpris_server::{Metadata, Property, Time};
 use rodio::{Player, source::EmptyCallback};
 use tokio::sync::{broadcast, mpsc::UnboundedSender};
+use url::Url;
 
-use crate::{events::ServerEvent, internal_events::InternalEvent};
+use crate::{
+    app::MprisServer,
+    events::ServerEvent,
+    internal_events::InternalEvent,
+    services::{COVER_ADDR, mpris::Mpris},
+};
 
 pub struct Orchestrator {
     playback: Arc<Playback>,
@@ -62,26 +69,55 @@ impl Orchestrator {
         Ok(())
     }
 
-    pub fn play(&self) -> Result<()> {
+    pub async fn play(&self, mpris_server: &Option<MprisServer>) -> Result<()> {
         if self.queue.current_track.is_some() && self.playback.player.empty() {
             self.rewind()?;
         }
 
         self.playback.play();
+        if let Some(mpris_server) = mpris_server {
+            mpris_server
+                .read()
+                .await
+                .properties_changed([Property::PlaybackStatus(Mpris::match_playback_status(
+                    self.playback_status(),
+                ))])
+                .await?
+        }
 
         Ok(())
     }
 
-    pub fn pause(&self) {
+    pub async fn pause(&self, mpris_server: &Option<MprisServer>) -> Result<()> {
         self.playback.pause();
+        if let Some(mpris_server) = mpris_server {
+            mpris_server
+                .read()
+                .await
+                .properties_changed([Property::PlaybackStatus(Mpris::match_playback_status(
+                    self.playback_status(),
+                ))])
+                .await?
+        };
+
+        Ok(())
     }
 
-    pub fn toggle_play(&self) -> Result<()> {
+    pub async fn toggle_play(&self, mpris_server: &Option<MprisServer>) -> Result<()> {
         if self.queue.current_track.is_some() && self.playback.player.empty() {
             self.rewind()?;
             self.playback.play();
         } else {
             self.playback.toggle_play();
+        }
+        if let Some(mpris_server) = mpris_server {
+            mpris_server
+                .read()
+                .await
+                .properties_changed([Property::PlaybackStatus(Mpris::match_playback_status(
+                    self.playback_status(),
+                ))])
+                .await?
         }
 
         Ok(())
@@ -152,16 +188,17 @@ impl Orchestrator {
         self.playback.get_snapshot()
     }
 
-    pub async fn enqueue(&mut self, id: TrackId) -> Result<()> {
+    pub async fn enqueue(&mut self, id: TrackId, mpris_server: &Option<MprisServer>) -> Result<()> {
         if let Some(track) = self.library.tracks.get(&id).cloned() {
             self.queue.enqueue(track.clone());
+
             log::debug!("Called Orchestrator::enqueue");
             if self.queue.current_track.is_none() {
-                self.next().await?;
+                self.next(mpris_server).await?;
             } else if self.queue.current_track.is_some() && self.playback.player.empty() {
-                self.next().await?;
+                self.next(mpris_server).await?;
             } else if self.playback.player.empty() {
-                self.next().await?;
+                self.next(mpris_server).await?;
             }
         }
 
@@ -178,9 +215,13 @@ impl Orchestrator {
         self.queue.dequeue(index);
     }
 
-    pub async fn play_now(&mut self, track_id: TrackId) -> Result<()> {
+    pub async fn play_now(
+        &mut self,
+        track_id: TrackId,
+        mpris_server: &Option<MprisServer>,
+    ) -> Result<()> {
         self.prepend(track_id);
-        self.next().await?;
+        self.next(mpris_server).await?;
 
         Ok(())
     }
@@ -193,13 +234,25 @@ impl Orchestrator {
         !self.queue.previous_tracks.is_empty()
     }
 
-    pub async fn next(&mut self) -> Result<bool> {
+    pub async fn next(&mut self, mpris_server: &Option<MprisServer>) -> Result<bool> {
         if self.queue.next()
             && let Some(track) = self.queue.current_track.as_ref()
         {
             self.playback.player.clear();
             self.load_track(&track.pathbuf)?;
-            self.playback.play();
+            self.play(mpris_server).await?;
+            if let Some(mpris_server) = mpris_server {
+                mpris_server
+                    .read()
+                    .await
+                    .properties_changed([
+                        Property::Metadata(self.current_metadata()),
+                        Property::CanPlay(true),
+                        Property::CanPause(true),
+                        Property::CanSeek(true),
+                    ])
+                    .await?
+            }
             Ok(true)
         } else {
             Ok(false)
@@ -238,8 +291,33 @@ impl Orchestrator {
         self.queue.cycle_loop_mode();
     }
 
-    pub fn get_current_track(&self) -> Option<Arc<Track>> {
+    pub fn current_track(&self) -> Option<Arc<Track>> {
         self.queue.current_track.clone()
+    }
+
+    pub fn current_metadata(&self) -> Metadata {
+        if let Some(track) = self.current_track() {
+            let mut m = Metadata::new();
+            m.set_title(Some(track.metadata.title.clone()));
+            m.set_album(track.metadata.album.clone());
+            m.set_artist(track.metadata.artist.clone().map(|s| vec![s]));
+            m.set_art_url(
+                track
+                    .pathbuf
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .and_then(|name| Url::parse(&format!("{}/{}", COVER_ADDR, name)).ok()),
+            );
+            m.set_disc_number(track.metadata.disc_number.map(|n| n as i32));
+            m.set_genre(track.metadata.genre.clone().map(|s| vec![s]));
+            m.set_length(Some(Time::from_millis(
+                track.properties.duration.as_millis() as i64,
+            )));
+
+            m
+        } else {
+            Metadata::new()
+        }
     }
 
     pub fn restart_queue(&mut self) {

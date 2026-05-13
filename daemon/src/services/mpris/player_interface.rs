@@ -1,40 +1,38 @@
-use ami_core::{player::playback_status, queue::loop_mode};
+use std::time::Duration;
+
+use ami_core::queue::loop_mode;
 use mpris_server::{
     LoopStatus, Metadata, PlaybackRate, PlaybackStatus, PlayerInterface, Time, TrackId, Volume,
     zbus::{self, fdo},
 };
-use url::Url;
 
-use crate::services::{COVER_ADDR, mpris::Mpris};
+use crate::{
+    commands::{Command, PlaybackCommand, QueueCommand},
+    services::mpris::Mpris,
+};
 
 impl PlayerInterface for Mpris {
     async fn next(&self) -> fdo::Result<()> {
-        let mut orchestrator = self.shared_state.write().await;
-        let _ = orchestrator
-            .next()
-            .await
-            .inspect_err(|e| log::error!("{e}"));
+        let _ = self.command_tx.send(Command::Queue(QueueCommand::Next));
         Ok(())
     }
 
     async fn previous(&self) -> fdo::Result<()> {
-        let mut orchestrator = self.shared_state.write().await;
-        let _ = orchestrator
-            .prev()
-            .await
-            .inspect_err(|e| log::error!("{e}"));
+        let _ = self.command_tx.send(Command::Queue(QueueCommand::Prev));
         Ok(())
     }
 
     async fn pause(&self) -> fdo::Result<()> {
-        let orchestrator = self.shared_state.read().await;
-        let _ = orchestrator.pause();
+        let _ = self
+            .command_tx
+            .send(Command::Playback(PlaybackCommand::Pause));
         Ok(())
     }
 
     async fn play_pause(&self) -> fdo::Result<()> {
-        let orchestrator = self.shared_state.read().await;
-        let _ = orchestrator.toggle_play();
+        let _ = self
+            .command_tx
+            .send(Command::Playback(PlaybackCommand::TogglePlay));
         Ok(())
     }
 
@@ -43,27 +41,34 @@ impl PlayerInterface for Mpris {
     }
 
     async fn play(&self) -> fdo::Result<()> {
-        let orchestrator = self.shared_state.read().await;
-        let _ = orchestrator.play();
+        let _ = self
+            .command_tx
+            .send(Command::Playback(PlaybackCommand::Play));
         Ok(())
     }
 
     async fn seek(&self, offset: Time) -> fdo::Result<()> {
-        let orchestrator = self.shared_state.read().await;
-        let _ = orchestrator.seek(offset.as_secs() as i64);
+        let _ = self
+            .command_tx
+            .send(Command::Playback(PlaybackCommand::Seek {
+                offset_seconds: offset.as_secs() as i64,
+            }));
         Ok(())
     }
 
     async fn set_position(&self, _track_id: TrackId, position: Time) -> fdo::Result<()> {
-        let orchestrator = self.shared_state.read().await;
-        let _ = orchestrator.seek(position.as_secs() as i64);
+        let _ = self
+            .command_tx
+            .send(Command::Playback(PlaybackCommand::SetPosition(
+                Duration::from_micros(position.as_micros() as u64),
+            )));
         Ok(())
     }
     async fn position(&self) -> fdo::Result<Time> {
         let orchestrator = self.shared_state.read().await;
 
-        Ok(Time::from_millis(
-            orchestrator.player_position().as_millis() as i64,
+        Ok(Time::from_micros(
+            orchestrator.player_position().as_micros() as i64,
         ))
     }
 
@@ -73,11 +78,7 @@ impl PlayerInterface for Mpris {
 
     async fn playback_status(&self) -> fdo::Result<PlaybackStatus> {
         let orchestrator = self.shared_state.read().await;
-        let status = match orchestrator.playback_status() {
-            playback_status::PlaybackStatus::Paused => PlaybackStatus::Paused,
-            playback_status::PlaybackStatus::Playing => PlaybackStatus::Playing,
-            playback_status::PlaybackStatus::Stopped => PlaybackStatus::Stopped,
-        };
+        let status = Mpris::match_playback_status(orchestrator.playback_status());
         Ok(status)
     }
 
@@ -97,16 +98,15 @@ impl PlayerInterface for Mpris {
             LoopStatus::Playlist => loop_mode::LoopMode::Queue,
             LoopStatus::Track => loop_mode::LoopMode::Track,
         };
-        let mut orchestrator = self.shared_state.write().await;
-        orchestrator.set_loop_mode(loop_mode);
+        let _ = self
+            .command_tx
+            .send(Command::Queue(QueueCommand::SetLoopMode(loop_mode)));
 
         Ok(())
     }
 
     async fn rate(&self) -> fdo::Result<PlaybackRate> {
-        let orchestrator = self.shared_state.read().await;
-
-        Ok(orchestrator.playback_speed() as f64)
+        Ok(1.0)
     }
 
     async fn set_rate(&self, _rate: PlaybackRate) -> zbus::Result<()> {
@@ -123,30 +123,8 @@ impl PlayerInterface for Mpris {
 
     async fn metadata(&self) -> fdo::Result<Metadata> {
         let orchestrator = self.shared_state.read().await;
-        let metadata = if let Some(track) = orchestrator.get_current_track() {
-            let mut m = Metadata::new();
-            m.set_title(Some(track.metadata.title.clone()));
-            m.set_album(track.metadata.album.clone());
-            m.set_artist(track.metadata.artist.clone().map(|s| vec![s]));
-            m.set_art_url(
-                track
-                    .pathbuf
-                    .file_name()
-                    .and_then(|s| s.to_str())
-                    .and_then(|name| Url::parse(&format!("{}/{}", COVER_ADDR, name)).ok()),
-            );
-            m.set_disc_number(track.metadata.disc_number.map(|n| n as i32));
-            m.set_genre(track.metadata.genre.clone().map(|s| vec![s]));
-            m.set_length(Some(Time::from_millis(
-                track.properties.duration.as_millis() as i64,
-            )));
 
-            m
-        } else {
-            Metadata::new()
-        };
-
-        Ok(metadata)
+        Ok(orchestrator.current_metadata())
     }
 
     async fn volume(&self) -> fdo::Result<Volume> {
@@ -155,8 +133,12 @@ impl PlayerInterface for Mpris {
     }
 
     async fn set_volume(&self, volume: Volume) -> zbus::Result<()> {
-        let orchestrator = self.shared_state.read().await;
-        Ok(orchestrator.set_volume(volume as f32))
+        let _ = self
+            .command_tx
+            .send(Command::Playback(PlaybackCommand::SetVolume {
+                value: volume as f32,
+            }));
+        Ok(())
     }
 
     async fn minimum_rate(&self) -> fdo::Result<PlaybackRate> {
@@ -179,17 +161,17 @@ impl PlayerInterface for Mpris {
 
     async fn can_play(&self) -> fdo::Result<bool> {
         let orchestrator = self.shared_state.read().await;
-        Ok(orchestrator.get_current_track().is_some())
+        Ok(orchestrator.current_track().is_some())
     }
 
     async fn can_pause(&self) -> fdo::Result<bool> {
         let orchestrator = self.shared_state.read().await;
-        Ok(orchestrator.get_current_track().is_some())
+        Ok(orchestrator.current_track().is_some())
     }
 
     async fn can_seek(&self) -> fdo::Result<bool> {
         let orchestrator = self.shared_state.read().await;
-        Ok(orchestrator.get_current_track().is_some())
+        Ok(orchestrator.current_track().is_some())
     }
 
     async fn can_control(&self) -> fdo::Result<bool> {

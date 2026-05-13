@@ -4,12 +4,12 @@ use anyhow::Result;
 use futures_util::{SinkExt, StreamExt};
 use tokio::{
     net::{TcpListener, TcpStream},
-    sync::broadcast,
+    sync::{broadcast, mpsc::UnboundedReceiver},
 };
 use tokio_tungstenite::{accept_async, tungstenite::Message};
 
 use crate::{
-    app::SharedState,
+    app::{MprisServer, SharedState},
     command_handler::handle_command,
     commands::Command,
     internal_events::{InternalEvent, handle_internal_event},
@@ -18,37 +18,51 @@ use crate::{
 pub struct WebSocketService {
     pub listener: TcpListener,
     pub connection_tx: Arc<broadcast::Sender<String>>,
-    pub internal_event_rx: Option<tokio::sync::mpsc::UnboundedReceiver<InternalEvent>>,
+    pub internal_event_rx: Option<UnboundedReceiver<InternalEvent>>,
+    pub command_rx: Option<UnboundedReceiver<Command>>,
     pub shared_state: SharedState,
+    pub mpris_server: Option<MprisServer>,
 }
 
 impl WebSocketService {
     pub fn new(
         listener: TcpListener,
         connection_tx: Arc<broadcast::Sender<String>>,
-        internal_event_rx: tokio::sync::mpsc::UnboundedReceiver<InternalEvent>,
+        internal_event_rx: UnboundedReceiver<InternalEvent>,
+        command_rx: UnboundedReceiver<Command>,
         shared_state: SharedState,
+        mpris_server: Option<MprisServer>,
     ) -> Self {
         Self {
             listener,
             connection_tx,
             internal_event_rx: Some(internal_event_rx),
+            command_rx: Some(command_rx),
             shared_state,
+            mpris_server,
         }
     }
 
     pub async fn start(&mut self) -> Result<()> {
         let mut internal_event_rx = self.internal_event_rx.take().unwrap();
+        let mut command_rx = self.command_rx.take().unwrap();
         let connection_tx = Arc::clone(&self.connection_tx);
         let shared_state = self.shared_state.clone();
+        let mpris_server = self.mpris_server.clone();
         tokio::spawn(async move {
             loop {
-                if let Some(event) = internal_event_rx.recv().await {
-                    let mut state = shared_state.write().await;
-                    if let Err(e) =
-                        handle_internal_event(event, &mut state, &connection_tx.clone()).await
-                    {
-                        log::error!("Internal event error: {e}");
+                tokio::select! {
+                    Some(event) = internal_event_rx.recv() => {
+                        let mut state = shared_state.write().await;
+                        let _ = handle_internal_event(
+                            event,
+                            &mut state,
+                            &connection_tx.clone(),
+                            mpris_server.clone(),
+                        ).await.inspect_err(|e| log::error!("Internal event error: {e}"));
+                    }
+                    Some(cmd) = command_rx.recv() => {
+                        let _ = handle_command(cmd, shared_state.clone(), &connection_tx.clone(), mpris_server.clone()).await.inspect_err(|e| log::error!("Command error: {e}"));
                     }
                 }
             }
@@ -63,6 +77,7 @@ impl WebSocketService {
                 peer,
                 self.connection_tx.clone(),
                 self.shared_state.clone(),
+                self.mpris_server.clone(),
             ));
         }
     }
@@ -72,6 +87,7 @@ impl WebSocketService {
         peer: SocketAddr,
         connection_tx: Arc<broadcast::Sender<String>>,
         shared_state: SharedState,
+        mpris_server: Option<MprisServer>,
     ) -> Result<()> {
         log::debug!("{peer} connected");
 
@@ -94,7 +110,7 @@ impl WebSocketService {
                                 log::debug!("Received a message from client: {}", text);
                                 {
                                     // Handle commands. Mutate state and send messages to the local broadcast channel if needed.
-                                    handle_command(cmd, shared_state.clone(), &connection_tx).await?;
+                                    handle_command(cmd, shared_state.clone(), &connection_tx, mpris_server.clone()).await?;
                                 }
                         }}
                         // Client disconnected or error

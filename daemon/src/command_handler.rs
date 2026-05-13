@@ -2,7 +2,7 @@ use anyhow::Result;
 use tokio::sync::broadcast;
 
 use crate::{
-    app::SharedState,
+    app::{MprisServer, SharedState},
     commands::{Command, LibraryCommand, PlaybackCommand, QueueCommand},
     events::ServerEvent,
 };
@@ -11,11 +11,16 @@ pub async fn handle_command(
     command: Command,
     state: SharedState,
     connection_tx: &broadcast::Sender<String>,
+    mpris_server: Option<MprisServer>,
 ) -> Result<()> {
     match command {
-        Command::Playback(cmd) => handle_playback_command(cmd, state, connection_tx).await,
-        Command::Queue(cmd) => handle_queue_command(cmd, state, connection_tx).await,
-        Command::Library(cmd) => handle_library_command(cmd, state, connection_tx).await,
+        Command::Playback(cmd) => {
+            handle_playback_command(cmd, state, connection_tx, &mpris_server).await
+        }
+        Command::Queue(cmd) => handle_queue_command(cmd, state, connection_tx, &mpris_server).await,
+        Command::Library(cmd) => {
+            handle_library_command(cmd, state, connection_tx, &mpris_server).await
+        }
     }
 }
 
@@ -23,15 +28,16 @@ pub async fn handle_playback_command(
     command: PlaybackCommand,
     shared_state: SharedState,
     tx: &broadcast::Sender<String>,
+    mpris_server: &Option<MprisServer>,
 ) -> Result<()> {
     let no_broadcast = matches!(command, PlaybackCommand::Seek { .. });
 
     match command {
-        PlaybackCommand::Play => shared_state.read().await.play()?,
+        PlaybackCommand::Play => shared_state.read().await.play(mpris_server).await?,
 
-        PlaybackCommand::Pause => shared_state.read().await.pause(),
+        PlaybackCommand::Pause => shared_state.read().await.pause(mpris_server).await?,
 
-        PlaybackCommand::TogglePlay => shared_state.read().await.toggle_play()?,
+        PlaybackCommand::TogglePlay => shared_state.read().await.toggle_play(mpris_server).await?,
 
         PlaybackCommand::SetPosition(pos) => shared_state.read().await.set_position(pos)?,
 
@@ -64,20 +70,27 @@ pub async fn handle_queue_command(
     command: QueueCommand,
     shared_state: SharedState,
     tx: &broadcast::Sender<String>,
+    mpris_server: &Option<MprisServer>,
 ) -> Result<()> {
     match command {
         QueueCommand::Enqueue { track_id } => {
             let mut orchestrator = shared_state.write().await;
-            orchestrator.enqueue(track_id).await?;
+            orchestrator.enqueue(track_id, mpris_server).await?;
             let event = ServerEvent::SendPlayerSnapshot(orchestrator.get_player_snapshot());
             let json = serde_json::to_string(&event)?;
             let _ = tx.send(json);
         }
         QueueCommand::Prepend { track_id } => shared_state.write().await.prepend(track_id),
         QueueCommand::Dequeue { index } => shared_state.write().await.dequeue(index),
-        QueueCommand::PlayNow { track_id } => shared_state.write().await.play_now(track_id).await?,
+        QueueCommand::PlayNow { track_id } => {
+            shared_state
+                .write()
+                .await
+                .play_now(track_id, mpris_server)
+                .await?
+        }
         QueueCommand::Next => {
-            shared_state.write().await.next().await?;
+            shared_state.write().await.next(mpris_server).await?;
         }
         QueueCommand::Prev => shared_state.write().await.prev().await?,
         QueueCommand::Shuffle => shared_state.write().await.shuffle(),
@@ -98,6 +111,7 @@ pub async fn handle_library_command(
     command: LibraryCommand,
     state: SharedState,
     tx: &broadcast::Sender<String>,
+    _mpris_server: &Option<MprisServer>,
 ) -> Result<()> {
     match command {
         LibraryCommand::Fetch => {
