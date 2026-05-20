@@ -44,7 +44,7 @@ impl Widget for &App {
         if let Ok(daemon_states) = self.daemon_states.try_lock().as_mut() {
             let cover_art = CoverArt {};
 
-            if let Some(protocol) = daemon_states.cover_art.as_mut() {
+            if let Some((_, protocol)) = daemon_states.cover_art.as_mut() {
                 cover_art.render(playing_panel[0], buf, protocol);
             }
 

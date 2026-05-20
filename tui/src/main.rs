@@ -111,20 +111,24 @@ async fn connect(
                                 ServerEvent::SendQueue(queue) => {
                                     if let Some(current_track) = queue.current_track.as_ref() {
                                             // Get and parse cover art if thumbnail path exists
-                                            if let Some(thumb_path) = current_track.metadata.thumbnail_path.as_ref() {
-                                                if let Some(filename) = thumb_path.file_name().and_then(|s| s.to_str()) {
-                                                    let url = Url::parse(&format!("{}/{}", COVER_URL, filename))?;
-                                                    let states = states.clone();
-                                                    let picker = image_picker.clone();
-                                                    tokio::spawn(async move {
-                                                        if let Ok(Some(protocol)) = CoverArt::parse_cover_art(url, picker).await {
-                                                            let mut states = states.lock().await;
-                                                            states.cover_art = Some(protocol);
-                                                        }
-                                                    });
+                                            let id = current_track.id.clone();
+                                            let mut locked_states = states.lock().await;
+                                            let cloned_states = states.clone();
+                                            let already_loaded: bool = matches!(locked_states.cover_art, Some(ref cover_art) if cover_art.0 == id);
+                                            if !already_loaded {
+                                                if let Some(thumb_path) = current_track.metadata.thumbnail_path.as_ref() {
+                                                    if let Some(filename) = thumb_path.file_name().and_then(|s| s.to_str()) {
+                                                        let url = Url::parse(&format!("{}/{}", COVER_URL, filename))?;
+                                                        let picker = image_picker.clone();
+                                                        tokio::spawn(async move {
+                                                            if let Ok(Some(protocol)) = CoverArt::parse_cover_art(url, picker).await {
+                                                                cloned_states.lock().await.cover_art = Some((id, protocol));
+                                                            }
+                                                        });
+                                                    }
+                                                } else {
+                                                    locked_states.cover_art = None;
                                                 }
-                                            } else {
-                                                states.lock().await.cover_art = None;
                                             }
                                         }
                                         states.lock().await.queue_snapshot = queue;

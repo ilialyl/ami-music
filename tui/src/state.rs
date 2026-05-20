@@ -11,7 +11,7 @@ pub struct DaemonStates {
     pub queue_snapshot: Queue,
     pub library_snapshot: Vec<(TrackId, Arc<Track>)>,
     pub library_selected_index: usize,
-    pub cover_art: Option<StatefulProtocol>,
+    pub cover_art: Option<(TrackId, StatefulProtocol)>,
 }
 
 impl Debug for DaemonStates {
