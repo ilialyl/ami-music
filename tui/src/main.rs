@@ -117,6 +117,7 @@ async fn connect(
                                             let already_loaded: bool = matches!(locked_states.cover_art, Some(ref cover_art) if cover_art.0 == id);
                                             if !already_loaded {
                                                 if let Some(thumb_path) = current_track.metadata.cover_art_path.as_ref() {
+                                                    locked_states.cover_art = None;
                                                     if let Some(filename) = thumb_path.file_name().and_then(|s| s.to_str()) {
                                                         let url = Url::parse(&format!("{}/{}", COVER_URL, filename))?;
                                                         let picker = image_picker.clone();
