@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::cache::get_cover_art_cache_path;
 
-const THUMB_SIZE: u32 = 1000;
+const COVER_ART_SIZE: u32 = 1000;
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug)]
 pub struct Metadata {
@@ -37,9 +37,9 @@ impl Metadata {
 
     /// Cache the audio file's cover art and return PathBuf.
     pub fn cache_cover_art(audio_path: &Path) -> Option<PathBuf> {
-        let thumb_path = Self::cover_art_path(audio_path).ok()?;
-        if thumb_path.exists() {
-            return Some(thumb_path);
+        let cover_art_path = Self::cover_art_path(audio_path).ok()?;
+        if cover_art_path.exists() {
+            return Some(cover_art_path);
         }
 
         let tagged = lofty::read_from_path(audio_path).ok()?;
@@ -59,12 +59,12 @@ impl Metadata {
 
         log::debug!("Caching cover art for {:?}", audio_path);
 
-        let thumb = img.resize(THUMB_SIZE, THUMB_SIZE, FilterType::Lanczos3);
+        let cover_art = img.resize(COVER_ART_SIZE, COVER_ART_SIZE, FilterType::Lanczos3);
 
-        thumb
-            .save_with_format(&thumb_path, ImageFormat::Jpeg)
+        cover_art
+            .save_with_format(&cover_art_path, ImageFormat::Jpeg)
             .ok()?;
 
-        Some(thumb_path)
+        Some(cover_art_path)
     }
 }
