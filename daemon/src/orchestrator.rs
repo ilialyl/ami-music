@@ -307,7 +307,7 @@ impl Orchestrator {
             m.set_art_url(
                 track
                     .metadata
-                    .thumbnail_path
+                    .cover_art_path
                     .as_ref()
                     .and_then(|p| p.file_name())
                     .and_then(|s| s.to_str())

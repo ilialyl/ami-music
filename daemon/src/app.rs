@@ -55,7 +55,7 @@ impl App {
         let mpris = Mpris::new(self.orchestrator.clone(), command_tx);
         self.mpris_server = mpris.start().await.ok();
 
-        services::run_thumbnail_service()?;
+        services::run_cover_art_service()?;
 
         let player = Arc::clone(&self.orchestrator.read().await.clone_player_arc());
 

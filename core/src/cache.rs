@@ -12,8 +12,8 @@ pub fn get_cache_path() -> Result<PathBuf> {
     Ok(path)
 }
 
-pub fn get_thumbnail_cache_path() -> Result<PathBuf> {
-    let path = get_cache_path()?.join("thumbnails");
+pub fn get_cover_art_cache_path() -> Result<PathBuf> {
+    let path = get_cache_path()?.join("cover-art");
     if !path.exists() {
         create_dir_all(&path)?;
     }

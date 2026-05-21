@@ -1,4 +1,4 @@
-use ami_core::cache::get_thumbnail_cache_path;
+use ami_core::cache::get_cover_art_cache_path;
 use anyhow::Result;
 use axum::Router;
 use tokio::net::TcpListener;
@@ -8,9 +8,9 @@ pub mod mpris;
 
 pub const COVER_ADDR: &str = "0.0.0.0:7879";
 
-pub fn run_thumbnail_service() -> Result<()> {
+pub fn run_cover_art_service() -> Result<()> {
     let cover_art_dir_service =
-        Router::new().fallback_service(ServeDir::new(get_thumbnail_cache_path()?));
+        Router::new().fallback_service(ServeDir::new(get_cover_art_cache_path()?));
 
     tokio::spawn(async {
         axum::serve(

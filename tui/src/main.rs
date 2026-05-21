@@ -110,13 +110,13 @@ async fn connect(
                                 },
                                 ServerEvent::SendQueue(queue) => {
                                     if let Some(current_track) = queue.current_track.as_ref() {
-                                            // Get and parse cover art if thumbnail path exists
+                                            // Get and parse cover art if cover cache path exists
                                             let id = current_track.id.clone();
                                             let mut locked_states = states.lock().await;
                                             let cloned_states = states.clone();
                                             let already_loaded: bool = matches!(locked_states.cover_art, Some(ref cover_art) if cover_art.0 == id);
                                             if !already_loaded {
-                                                if let Some(thumb_path) = current_track.metadata.thumbnail_path.as_ref() {
+                                                if let Some(thumb_path) = current_track.metadata.cover_art_path.as_ref() {
                                                     if let Some(filename) = thumb_path.file_name().and_then(|s| s.to_str()) {
                                                         let url = Url::parse(&format!("{}/{}", COVER_URL, filename))?;
                                                         let picker = image_picker.clone();

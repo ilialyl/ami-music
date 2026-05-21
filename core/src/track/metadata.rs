@@ -8,7 +8,7 @@ use image::{ImageFormat, ImageReader, imageops::FilterType};
 use lofty::{file::TaggedFileExt, picture::PictureType};
 use serde::{Deserialize, Serialize};
 
-use crate::cache::get_thumbnail_cache_path;
+use crate::cache::get_cover_art_cache_path;
 
 const THUMB_SIZE: u32 = 1000;
 
@@ -21,12 +21,12 @@ pub struct Metadata {
     pub disc_number: Option<u32>,
     pub genre: Option<String>,
     pub year: Option<u32>,
-    pub thumbnail_path: Option<PathBuf>,
+    pub cover_art_path: Option<PathBuf>,
 }
 
 impl Metadata {
-    pub fn thumb_path(audio_path: &Path) -> Result<PathBuf> {
-        Ok(get_thumbnail_cache_path()?.join(format!(
+    pub fn cover_art_path(audio_path: &Path) -> Result<PathBuf> {
+        Ok(get_cover_art_cache_path()?.join(format!(
             "{}.jpg",
             audio_path
                 .file_stem()
@@ -35,14 +35,14 @@ impl Metadata {
         )))
     }
 
-    /// Cache the audio file's thumbnail and return PathBuf.
-    pub fn cache_thumb(audio_path: &Path) -> Option<PathBuf> {
-        let thumb_path = Self::thumb_path(audio_path).ok()?;
+    /// Cache the audio file's cover art and return PathBuf.
+    pub fn cache_cover_art(audio_path: &Path) -> Option<PathBuf> {
+        let thumb_path = Self::cover_art_path(audio_path).ok()?;
         if thumb_path.exists() {
             return Some(thumb_path);
         }
 
-        log::debug!("Caching thumbnail for {:?}", audio_path);
+        log::debug!("Caching cover art for {:?}", audio_path);
         let tagged = lofty::read_from_path(audio_path).ok()?;
         let tag = tagged.primary_tag().or_else(|| tagged.first_tag())?;
 

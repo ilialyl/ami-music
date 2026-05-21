@@ -55,7 +55,7 @@ impl Track {
             metadata.disc_number = primary_tag.track();
             metadata.genre = primary_tag.genre().map(|s| s.into_owned());
             metadata.year = primary_tag.year();
-            metadata.thumbnail_path = Metadata::cache_thumb(&path);
+            metadata.cover_art_path = Metadata::cache_cover_art(&path);
         }
 
         Ok(metadata)
