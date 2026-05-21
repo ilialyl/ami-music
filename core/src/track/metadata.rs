@@ -42,7 +42,6 @@ impl Metadata {
             return Some(thumb_path);
         }
 
-        log::debug!("Caching cover art for {:?}", audio_path);
         let tagged = lofty::read_from_path(audio_path).ok()?;
         let tag = tagged.primary_tag().or_else(|| tagged.first_tag())?;
 
@@ -57,6 +56,8 @@ impl Metadata {
             .ok()?
             .decode()
             .ok()?;
+
+        log::debug!("Caching cover art for {:?}", audio_path);
 
         let thumb = img.resize(THUMB_SIZE, THUMB_SIZE, FilterType::Lanczos3);
 
