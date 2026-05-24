@@ -26,7 +26,7 @@ use crate::{
     events::ServerEvent,
     internal_events::InternalEvent,
     services::{
-        COVER_ADDR,
+        cover_addr,
         mpris::{BUS_NAME, Mpris},
     },
 };
@@ -428,6 +428,7 @@ impl Orchestrator {
             m.set_title(Some(track.metadata.title.clone()));
             m.set_album(track.metadata.album.clone());
             m.set_artist(track.metadata.artist.clone().map(|s| vec![s]));
+            let cover_addr = cover_addr()?;
             m.set_art_url(
                 track
                     .metadata
@@ -435,7 +436,7 @@ impl Orchestrator {
                     .as_ref()
                     .and_then(|p| p.file_name())
                     .and_then(|s| s.to_str())
-                    .and_then(|name| Url::parse(&format!("http://{}/{}", COVER_ADDR, name)).ok()),
+                    .and_then(|name| Url::parse(&format!("http://{}/{}", cover_addr, name)).ok()),
             );
             m.set_disc_number(track.metadata.disc_number.map(|n| n as i32));
             m.set_genre(track.metadata.genre.clone().map(|s| vec![s]));

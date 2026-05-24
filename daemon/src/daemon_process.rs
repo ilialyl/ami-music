@@ -2,7 +2,7 @@ use std::{fs, process};
 
 use anyhow::Result;
 
-use crate::app::DAEMON_ADDR;
+use crate::services::daemon_addr;
 
 pub const PID_FILE: &str = "/tmp/ami_daemon.pid";
 
@@ -24,7 +24,7 @@ pub fn handle_start() -> Result<()> {
         .stderr(process::Stdio::null())
         .spawn()?;
     println!("Started PID {}", child.id());
-    println!("Server listening on {DAEMON_ADDR}");
+    println!("Server listening on {}", daemon_addr()?);
     Ok(())
 }
 

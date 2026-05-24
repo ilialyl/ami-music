@@ -13,13 +13,12 @@ use crate::commands::Command;
 use crate::daemon_process::PID_FILE;
 use crate::internal_events::InternalEvent;
 use crate::orchestrator::Orchestrator;
-use crate::services;
 use crate::services::mpris::Mpris;
+use crate::services::{self, daemon_addr};
 use crate::websockets::WebSocketService;
 
 pub type SharedState = Arc<RwLock<Orchestrator>>;
 pub type MprisServer = Arc<RwLock<Server<Mpris>>>;
-pub const DAEMON_ADDR: &str = "0.0.0.0:7878";
 const CHANNEL_CAPACITY: usize = 32;
 
 pub struct App {
@@ -59,8 +58,9 @@ impl App {
 
         let player = Arc::clone(&self.orchestrator.read().await.clone_player_arc());
 
-        let listener = TcpListener::bind(DAEMON_ADDR).await?;
-        log::debug!("Server listening on {DAEMON_ADDR}");
+        let daemon_addr = daemon_addr()?;
+        let listener = TcpListener::bind(daemon_addr.clone()).await?;
+        log::debug!("Server listening on {daemon_addr}");
 
         // A broadcast channel: one sender, many receivers (one per client)
         let (connection_tx, _) = broadcast::channel::<String>(CHANNEL_CAPACITY);
