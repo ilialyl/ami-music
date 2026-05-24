@@ -436,7 +436,11 @@ impl Orchestrator {
                     .as_ref()
                     .and_then(|p| p.file_name())
                     .and_then(|s| s.to_str())
-                    .and_then(|name| Url::parse(&format!("http://{}/{}", cover_addr, name)).ok()),
+                    .and_then(|name| {
+                        let url = Url::parse(&format!("http://{}/{}", cover_addr, name)).ok();
+                        log::debug!("Cover url: {:?}", url);
+                        url
+                    }),
             );
             m.set_disc_number(track.metadata.disc_number.map(|n| n as i32));
             m.set_genre(track.metadata.genre.clone().map(|s| vec![s]));
