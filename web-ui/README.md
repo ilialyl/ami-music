@@ -15,7 +15,7 @@ To recreate this project with the same configuration:
 
 ```sh
 # recreate this project
-pnpm dlx sv@0.15.2 create --template minimal --types ts --install pnpm web_ui
+pnpm dlx sv@0.15.3 create --template minimal --types ts --add tailwindcss="plugins:none" prettier --install pnpm web-ui
 ```
 
 ## Developing
