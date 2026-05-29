@@ -11,6 +11,7 @@ use lofty::{
     tag::Accessor,
 };
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::{
     library::TrackId,
@@ -18,7 +19,8 @@ use crate::{
 };
 
 /// Stores necessary information about a track.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, TS)]
+#[ts(export, export_to = "track.ts")]
 pub struct Track {
     pub id: TrackId,
     pub pathbuf: PathBuf,

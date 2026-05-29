@@ -7,12 +7,14 @@ use anyhow::Result;
 use image::{ImageFormat, ImageReader, imageops::FilterType};
 use lofty::{file::TaggedFileExt, picture::PictureType};
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::cache::get_cover_art_cache_path;
 
 const COVER_ART_SIZE: u32 = 1000;
 
-#[derive(Default, Serialize, Deserialize, Clone, Debug)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts(export, export_to = "metadata.ts")]
 pub struct Metadata {
     pub length: u128,
     pub album: Option<String>,

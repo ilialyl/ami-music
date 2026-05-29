@@ -15,4 +15,5 @@ rodio = { git = "https://github.com/RustAudio/rodio.git", features = ["symphonia
 serde = { version = "1.0.228", features = ["derive", "rc"] }
 tokio = { version = "1.50.0", features = ["full"] }
 toml = "1.1.2"
+ts-rs = "12.0.1"
 walkdir = "2.5.0"

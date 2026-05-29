@@ -2,13 +2,15 @@ use std::{collections::HashMap, str::FromStr, sync::Arc};
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 use walkdir::WalkDir;
 
 use crate::{config::LibraryConfig, library::helper::is_rodio_supported, track::Track};
 
 pub mod helper;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default, TS)]
+#[ts(export, export_to = "track_id.ts")]
 pub struct TrackId(u64);
 
 impl TrackId {

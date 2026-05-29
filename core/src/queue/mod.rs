@@ -2,6 +2,7 @@ use std::{collections::VecDeque, sync::Arc};
 
 use rand::{rng, seq::SliceRandom};
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::{queue::loop_mode::LoopMode, track::Track};
 
@@ -10,7 +11,8 @@ pub mod tests;
 
 pub mod loop_mode;
 /// Struct to act as a queue of tracks.
-#[derive(Default, Debug, Serialize, Deserialize, Clone)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone, TS)]
+#[ts(export, export_to = "queue.ts")]
 pub struct Queue {
     pub loop_mode: LoopMode,
     pub current_track: Option<Arc<Track>>,
