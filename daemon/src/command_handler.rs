@@ -167,7 +167,7 @@ pub async fn handle_library_command(
 ) -> Result<()> {
     match command {
         LibraryCommand::Fetch => {
-            let event = ServerEvent::SendLibrary(state.read().await.clone_library());
+            let event = ServerEvent::SendLibrary(state.read().await.get_library_snapshot());
             let json = serde_json::to_string(&event)?;
             let _ = tx.send(json);
         }

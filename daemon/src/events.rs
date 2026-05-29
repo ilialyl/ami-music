@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{collections::HashMap, time::Duration};
 
 use ami_core::{
     library::TrackId, player::playback_snapshot::PlayerSnapshot,
@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type", content = "data")]
 pub enum ServerEvent {
-    SendLibrary(HashMap<TrackId, Arc<Track>>),
+    SendLibrary(HashMap<TrackId, Track>),
     SendQueue(QueueSnapshot),
     SendPlayerSnapshot(PlayerSnapshot),
     SendPlayerPosition(Duration),

@@ -1,4 +1,4 @@
-use std::{fmt::Debug, sync::Arc};
+use std::fmt::Debug;
 
 use ami_core::{
     library::TrackId, player::playback_snapshot::PlayerSnapshot,
@@ -10,7 +10,7 @@ use ratatui_image::protocol::StatefulProtocol;
 pub struct DaemonStates {
     pub player_snapshot: PlayerSnapshot,
     pub queue_snapshot: QueueSnapshot,
-    pub library_snapshot: Vec<(TrackId, Arc<Track>)>,
+    pub library_snapshot: Vec<(TrackId, Track)>,
     pub library_selected_index: usize,
     pub cover_art: Option<(TrackId, StatefulProtocol)>,
 }

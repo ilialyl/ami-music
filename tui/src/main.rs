@@ -113,7 +113,7 @@ async fn connect(
                         if let Ok(event) = serde_json::from_str::<ServerEvent>(&text) {
                             match event {
                                 ServerEvent::SendLibrary(tracks) => {
-                                    let mut library: Vec<(TrackId, Arc<Track>)> = tracks
+                                    let mut library: Vec<(TrackId, Track)> = tracks
                                                 .iter()
                                                 .map(|(&k, v)| (k, v.clone()))
                                                 .collect();

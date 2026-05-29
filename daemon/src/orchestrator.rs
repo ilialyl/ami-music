@@ -265,6 +265,15 @@ impl Orchestrator {
         self.queue.get_snapshot()
     }
 
+    pub fn get_library_snapshot(&self) -> HashMap<TrackId, Track> {
+        self.library
+            .tracks
+            .clone()
+            .into_iter()
+            .map(|(key, arc)| (key, (*arc).clone()))
+            .collect()
+    }
+
     pub async fn enqueue(&mut self, id: TrackId, mpris_server: &Option<MprisServer>) -> Result<()> {
         if let Some(track) = self.library.tracks.get(&id).cloned() {
             self.queue.enqueue(track.clone());
@@ -503,10 +512,6 @@ impl Orchestrator {
 
     pub fn clone_queue(&self) -> Queue {
         self.queue.clone()
-    }
-
-    pub fn clone_library(&self) -> HashMap<TrackId, Arc<Track>> {
-        self.library.tracks.clone()
     }
 
     pub fn clone_player_arc(&self) -> Arc<Player> {
