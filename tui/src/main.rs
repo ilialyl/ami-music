@@ -174,7 +174,7 @@ async fn connect(
 }
 
 pub fn setup_logger() -> Result<()> {
-    let log_path = PathBuf::from("/home/lyns0/projects/personal/ami/tui.log");
+    let log_path = PathBuf::from("ami-term.log");
 
     fern::Dispatch::new()
         .format(|out, message, record| {

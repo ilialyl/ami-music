@@ -3,7 +3,7 @@ use std::{path::PathBuf, time::SystemTime};
 use anyhow::Result;
 
 pub fn setup_logger() -> Result<()> {
-    let log_path = PathBuf::from("/home/lyns0/projects/personal/ami/daemon.log");
+    let log_path = PathBuf::from("ami-daemon.log");
 
     fern::Dispatch::new()
         .format(|out, message, record| {
