@@ -3,12 +3,15 @@ import type { ServerEvent } from "../types/server_event"
 import * as library from '$lib/commands/library';
 import * as queue from '$lib/commands/queue';
 import { daemonState } from "./stores/daemon_states.svelte"
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 
+export const wsPort = 7878;
+export const artPort = 7879;
 let ws: WebSocket | null = null
 export const connected = writable(false);
 
-export function connect(url: string) {
+export function connect(ip: string) {
+  let url = `ws://${ip}:${wsPort}`;
   ws = new WebSocket(url)
   ws.onopen = () => {
     connected.set(true)
