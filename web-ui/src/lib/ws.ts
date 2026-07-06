@@ -4,17 +4,22 @@ import * as library from '$lib/commands/library';
 import * as queue from '$lib/commands/queue';
 import { daemonState } from "./stores/daemon_states.svelte"
 import { get, writable } from "svelte/store";
+import { onMount } from "svelte";
+import { saveHostIp } from "./stores/local_storage.svelte";
 
 export const wsPort = 7878;
 export const artPort = 7879;
 let ws: WebSocket | null = null
-export const connected = writable(false);
+export const connected = writable<boolean | null>(null);
 
 export function connect(ip: string) {
+  if (ws && ws.readyState === WebSocket.OPEN) return;
+  if (ws && ws.readyState === WebSocket.CONNECTING) return;
   let url = `ws://${ip}:${wsPort}`;
   ws = new WebSocket(url)
   ws.onopen = () => {
     connected.set(true)
+    saveHostIp(ip)
     library.fetch()
     queue.fetch()
   }

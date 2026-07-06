@@ -11,8 +11,6 @@
 			connect(value);
 		}
 	}
-
-	
 </script>
 
 <input
