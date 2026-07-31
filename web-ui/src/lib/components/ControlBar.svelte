@@ -4,8 +4,11 @@
 	import * as library from '$lib/commands/library';
 	import { daemonState } from '$lib/stores/daemon_states.svelte';
 	import { Pause, Play, SkipBack, SkipForward } from '@lucide/svelte';
+	import { getHostIp } from '$lib/stores/local_storage.svelte';
+	import { get_art_url } from '$lib/helper';
 
 	let currentTrack = $derived(daemonState.queue?.current_track);
+	let artUrl = $derived(get_art_url(currentTrack, getHostIp())?.toString() ?? '');
 
 	let time = $derived(daemonState.player?.position.secs != null
 	  ? `${Math.floor(daemonState.player.position.secs / 60)}:${(daemonState.player.position.secs % 60).toString().padStart(2, '0')}`
@@ -13,7 +16,7 @@
 </script>
 
 <div
-	class="flex h-1/12 shrink-0 flex-row items-center justify-between space-x-5 border-t-2 bg-black px-10 text-white"
+	class="flex h-1/12 shrink-0 flex-row items-center justify-between space-x-5 border-t-2 bg-black text-white"
 >
     <div>
         {time}
@@ -36,11 +39,13 @@
       	    <SkipForward strokeWidth={1} />
       	</button>
 	</div>
-	<div>
-		<h1 class="text-lg font-bold">
-			{#if currentTrack}
-				{currentTrack.metadata.title} - {currentTrack.metadata.artist}
-			{/if}
-		</h1>
+	<div class="flex h-full items-center space-x-5">
+    	{#if currentTrack}
+    		<h1 class="text-lg font-bold">
+    				{currentTrack.metadata.title} - {currentTrack.metadata.artist}
+    		</h1>
+
+    		<img class="h-full" src={artUrl} alt="cover">
+        {/if}
 	</div>
 </div>
