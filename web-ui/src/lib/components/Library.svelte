@@ -5,13 +5,12 @@
 	import * as library from '$lib/commands/library';
 	import { getArtUrl } from '$lib/helper';
 	import { getHostIp } from '$lib/stores/local_storage.svelte';
-	import Track from './Track.svelte';
-
-	let style = $props();
+	import TrackButton from './TrackButton.svelte';
+	import type { Track } from '../../types/track';
 </script>
 
 <div class="flex h-full w-full flex-col space-y-2 overflow-y-auto">
 	{#each Object.values(daemonState.library) as track}
-		<Track {track} onclick={queue.enqueue(track.id)} />
+		<TrackButton {track} onclick={queue.enqueue(track.id)} />
 	{/each}
 </div>
