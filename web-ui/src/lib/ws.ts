@@ -8,7 +8,7 @@ import { onMount } from 'svelte';
 import { saveHostIp } from './stores/local_storage.svelte';
 
 export const wsPort = 7878;
-export const artPort = 7879;
+export const artPort = 7878;
 let ws: WebSocket | null = null;
 export const connected = writable<boolean | null>(null);
 

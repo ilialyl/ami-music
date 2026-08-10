@@ -1,20 +1,25 @@
 use std::process;
 use std::sync::Arc;
 
+use ami_core::cache::get_cover_art_cache_path;
 use ami_core::config::Config;
-use anyhow::Result;
+use anyhow::{Context, Result};
+use axum::Router;
+use axum::routing::get;
 use mpris_server::Server;
 use tokio::fs;
 use tokio::net::TcpListener;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tokio::sync::{RwLock, broadcast};
+use tower_http::services::ServeDir;
 
+use crate::command_handler::handle_command;
 use crate::commands::Command;
 use crate::daemon_process::PID_FILE;
-use crate::internal_events::InternalEvent;
+use crate::internal_events::{InternalEvent, handle_internal_event};
 use crate::orchestrator::Orchestrator;
 use crate::services::mpris::Mpris;
-use crate::services::{self, daemon_addr};
+use crate::services::{daemon_addr};
 use crate::websockets::WebSocketService;
 
 pub type SharedState = Arc<RwLock<Orchestrator>>;
@@ -49,12 +54,10 @@ impl App {
             .await
             .load_library_config(config.library);
 
-        let (command_tx, command_rx) = mpsc::unbounded_channel::<Command>();
+        let (command_tx, mut command_rx) = mpsc::unbounded_channel::<Command>();
 
         let mpris = Mpris::new(self.orchestrator.clone(), command_tx);
         self.mpris_server = mpris.start().await.ok();
-
-        services::run_cover_art_service()?;
 
         let player = Arc::clone(&self.orchestrator.read().await.clone_player_arc());
 
@@ -69,16 +72,40 @@ impl App {
         let tx = Arc::clone(&connection_tx);
         tokio::spawn(async move { Orchestrator::send_player_position(player, &tx).await });
 
-        let mut ws_service = WebSocketService::new(
-            listener,
-            connection_tx,
-            self.internal_event_rx
-                .take()
-                .expect("internal_event_rx already taken"),
-            command_rx,
+        let ws_service = WebSocketService::new(
+            connection_tx.clone(),
             self.orchestrator.clone(),
             self.mpris_server.clone(),
         );
-        ws_service.start().await
+
+        let server = Router::new()
+            .route("/", get(WebSocketService::ws_handler))
+            .fallback_service(ServeDir::new(get_cover_art_cache_path()?))
+            .with_state(ws_service);
+
+        axum::serve(listener, server).await?;
+
+        let mut internal_event_rx = self.internal_event_rx.take().context("Error: internal_event_rx was already taken.")?;
+        let shared_state = self.orchestrator.clone();
+        tokio::spawn(async move {
+                loop {
+                    tokio::select! {
+                        Some(event) = internal_event_rx.recv() => {
+                            let mut state = shared_state.write().await;
+                            let _ = handle_internal_event(
+                                event,
+                                &mut state,
+                                &connection_tx.clone(),
+                                self.mpris_server.clone(),
+                            ).await.inspect_err(|e| log::error!("Internal event error: {e}"));
+                        }
+                        Some(cmd) = command_rx.recv() => {
+                            let _ = handle_command(cmd, shared_state.clone(), &connection_tx.clone(), self.mpris_server.clone()).await.inspect_err(|e| log::error!("Command error: {e}"));
+                        }
+                    }
+                }
+            });
+
+        Ok(())
     }
 }
