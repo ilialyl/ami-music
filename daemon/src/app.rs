@@ -78,13 +78,6 @@ impl App {
             self.mpris_server.clone(),
         );
 
-        let server = Router::new()
-            .route("/", get(WebSocketService::ws_handler))
-            .fallback_service(ServeDir::new(get_cover_art_cache_path()?))
-            .with_state(ws_service);
-
-        axum::serve(listener, server).await?;
-
         let mut internal_event_rx = self.internal_event_rx.take().context("Error: internal_event_rx was already taken.")?;
         let shared_state = self.orchestrator.clone();
         tokio::spawn(async move {
@@ -105,6 +98,13 @@ impl App {
                     }
                 }
             });
+
+        let router = Router::new()
+            .route("/", get(WebSocketService::ws_handler))
+            .fallback_service(ServeDir::new(get_cover_art_cache_path()?))
+            .with_state(ws_service);
+
+        axum::serve(listener, router).await?;
 
         Ok(())
     }
