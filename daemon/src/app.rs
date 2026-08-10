@@ -9,6 +9,7 @@ use axum::routing::get;
 use mpris_server::Server;
 use tokio::fs;
 use tokio::net::TcpListener;
+use tokio::sync::broadcast::Sender;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tokio::sync::{RwLock, broadcast};
 use tower_http::services::ServeDir;
@@ -54,16 +55,12 @@ impl App {
             .await
             .load_library_config(config.library);
 
-        let (command_tx, mut command_rx) = mpsc::unbounded_channel::<Command>();
+        let (command_tx, command_rx) = mpsc::unbounded_channel::<Command>();
 
         let mpris = Mpris::new(self.orchestrator.clone(), command_tx);
         self.mpris_server = mpris.start().await.ok();
 
         let player = Arc::clone(&self.orchestrator.read().await.clone_player_arc());
-
-        let daemon_addr = daemon_addr()?;
-        let listener = TcpListener::bind(daemon_addr.clone()).await?;
-        log::debug!("Server listening on {daemon_addr}");
 
         // A broadcast channel: one sender, many receivers (one per client)
         let (connection_tx, _) = broadcast::channel::<String>(CHANNEL_CAPACITY);
@@ -78,26 +75,12 @@ impl App {
             self.mpris_server.clone(),
         );
 
-        let mut internal_event_rx = self.internal_event_rx.take().context("Error: internal_event_rx was already taken.")?;
-        let shared_state = self.orchestrator.clone();
-        tokio::spawn(async move {
-                loop {
-                    tokio::select! {
-                        Some(event) = internal_event_rx.recv() => {
-                            let mut state = shared_state.write().await;
-                            let _ = handle_internal_event(
-                                event,
-                                &mut state,
-                                &connection_tx.clone(),
-                                self.mpris_server.clone(),
-                            ).await.inspect_err(|e| log::error!("Internal event error: {e}"));
-                        }
-                        Some(cmd) = command_rx.recv() => {
-                            let _ = handle_command(cmd, shared_state.clone(), &connection_tx.clone(), self.mpris_server.clone()).await.inspect_err(|e| log::error!("Command error: {e}"));
-                        }
-                    }
-                }
-            });
+        let internal_event_rx = self.internal_event_rx.take().context("Error: internal_event_rx was already taken.")?;
+        Self::spawn_message_handler(internal_event_rx, connection_tx.clone(), command_rx, self.mpris_server.clone(), self.orchestrator.clone());
+
+        let daemon_addr = daemon_addr()?;
+        let listener = TcpListener::bind(daemon_addr.clone()).await?;
+        log::debug!("Server listening on {daemon_addr}");
 
         let router = Router::new()
             .route("/", get(WebSocketService::ws_handler))
@@ -107,5 +90,26 @@ impl App {
         axum::serve(listener, router).await?;
 
         Ok(())
+    }
+
+    fn spawn_message_handler(mut internal_event_rx: UnboundedReceiver<InternalEvent>, connection_tx: Arc<Sender<String>>, mut command_rx: UnboundedReceiver<Command>, mpris_server: Option<MprisServer>, shared_state: SharedState) {
+        tokio::spawn(async move {
+                loop {
+                    tokio::select! {
+                        Some(event) = internal_event_rx.recv() => {
+                            let mut state = shared_state.write().await;
+                            let _ = handle_internal_event(
+                                event,
+                                &mut state,
+                                &connection_tx.clone(),
+                                mpris_server.clone(),
+                            ).await.inspect_err(|e| log::error!("Internal event error: {e}"));
+                        }
+                        Some(cmd) = command_rx.recv() => {
+                            let _ = handle_command(cmd, shared_state.clone(), &connection_tx.clone(), mpris_server.clone()).await.inspect_err(|e| log::error!("Command error: {e}"));
+                        }
+                    }
+                }
+            });
     }
 }
