@@ -13,5 +13,9 @@ pub fn cover_addr() -> Result<String> {
 }
 
 pub fn daemon_addr() -> Result<String> {
-    Ok(format!("{}:{}", local_ip_addr()?, DAEMON_PORT))
+    Ok(format!("localhost:{}", DAEMON_PORT))
+}
+
+pub fn daemon_addr_listen() -> Result<String> {
+    Ok(format!("0.0.0.0:{}", DAEMON_PORT))
 }

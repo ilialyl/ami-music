@@ -20,7 +20,7 @@ use crate::daemon_process::PID_FILE;
 use crate::internal_events::{InternalEvent, handle_internal_event};
 use crate::orchestrator::Orchestrator;
 use crate::services::mpris::Mpris;
-use crate::services::{daemon_addr};
+use crate::services::{daemon_addr, daemon_addr_listen};
 use crate::websockets::WebSocketService;
 
 pub type SharedState = Arc<RwLock<Orchestrator>>;
@@ -31,15 +31,17 @@ pub struct App {
     pub orchestrator: SharedState,
     pub internal_event_rx: Option<UnboundedReceiver<InternalEvent>>,
     pub mpris_server: Option<MprisServer>,
+    pub listen: bool,
 }
 
 impl App {
-    pub fn new() -> Result<Self> {
+    pub fn new(listen: bool) -> Result<Self> {
         let (tx, rx) = mpsc::unbounded_channel::<InternalEvent>();
         Ok(App {
             orchestrator: Arc::new(RwLock::new(Orchestrator::new(tx)?)),
             mpris_server: None,
             internal_event_rx: Some(rx),
+            listen,
         })
     }
 
@@ -78,7 +80,12 @@ impl App {
         let internal_event_rx = self.internal_event_rx.take().context("Error: internal_event_rx was already taken.")?;
         Self::spawn_message_handler(internal_event_rx, connection_tx.clone(), command_rx, self.mpris_server.clone(), self.orchestrator.clone());
 
-        let daemon_addr = daemon_addr()?;
+        let daemon_addr = if self.listen {
+            daemon_addr_listen()?
+        } else {
+            daemon_addr()?
+        };
+
         let listener = TcpListener::bind(daemon_addr.clone()).await?;
         log::debug!("Server listening on {daemon_addr}");
 

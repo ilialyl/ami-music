@@ -7,8 +7,6 @@ use std::{
 use anyhow::Result;
 use serde::Deserialize;
 
-use crate::APP_NAME;
-
 #[derive(Deserialize)]
 pub struct Config {
     pub library: LibraryConfig,
@@ -27,7 +25,7 @@ impl Config {
                 "config directory not found",
             ))?
             .join("ami-music")
-            .join(format!("{}.toml", APP_NAME));
+            .join(format!("config.toml"));
 
         if !path.exists() {
             Self::write_default_config(&path)?;

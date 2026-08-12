@@ -10,11 +10,12 @@ use clap::Parser;
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        CliCommand::Start => return daemon_process::handle_start(),
+        CliCommand::Start(args) => return daemon_process::handle_start(args.listen),
         CliCommand::Stop => return daemon_process::handle_stop(),
-        CliCommand::Run | CliCommand::Debug => {}
+        CliCommand::Run(args) | CliCommand::Foreground(args) => {
+            setup_logger()?;
+            let app = App::new(args.listen)?;
+            tokio::runtime::Runtime::new()?.block_on(app.run())
+        }
     }
-    setup_logger()?;
-    let app = App::new()?;
-    tokio::runtime::Runtime::new()?.block_on(app.run())
 }

@@ -1,20 +1,27 @@
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, Args};
 
 #[derive(Parser)]
 #[command(arg_required_else_help = true)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: CliCommand,
+
 }
 
 #[derive(Subcommand)]
 pub enum CliCommand {
     /// Start the daemon in the background
-    Start,
+    Start(StartArgs),
     /// Stop the running daemon
     Stop,
     #[command(hide = true)]
-    Run,
+    Run(StartArgs),
     /// Start in foreground
-    Debug,
+    Foreground(StartArgs),
+}
+
+#[derive(Args)]
+pub struct StartArgs {
+    #[arg(long)]
+    pub listen: bool,
 }
