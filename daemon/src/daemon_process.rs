@@ -1,6 +1,7 @@
 use std::{fs, process};
 
 use anyhow::Result;
+use nix::{sys::signal, unistd::Pid};
 
 use crate::services::{daemon_addr, daemon_addr_listen};
 
@@ -8,13 +9,14 @@ pub const PID_FILE: &str = "/tmp/ami_daemon.pid";
 
 pub fn handle_start(listen: bool) -> Result<()> {
     if let Ok(pid_str) = fs::read_to_string(PID_FILE) {
-        let pid: i32 = pid_str.trim().parse().unwrap();
-        let alive = unsafe { libc::kill(pid, 0) == 0 };
-        if alive {
-            eprintln!("Already running as {pid}");
-            return Ok(());
-        }
-        let _ = fs::remove_file(PID_FILE);
+            let pid: i32 = pid_str.trim().parse()?;
+            // signal 0 = "is it alive" check, no actual signal sent
+            let alive = signal::kill(Pid::from_raw(pid), None).is_ok();
+            if alive {
+                eprintln!("Already running as {pid}");
+                return Ok(());
+            }
+            let _ = fs::remove_file(PID_FILE);
     }
 
     let mut cmd = process::Command::new(std::env::current_exe()?);

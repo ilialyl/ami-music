@@ -110,6 +110,7 @@ dependencies = [
  "local-ip-address",
  "log",
  "mpris-server",
+ "nix",
  "rodio",
  "serde",
  "serde_json",
