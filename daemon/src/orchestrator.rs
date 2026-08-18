@@ -40,12 +40,12 @@ pub struct Orchestrator {
 
 impl Orchestrator {
     pub fn new(tx: UnboundedSender<InternalEvent>) -> Result<Self> {
-        println!("Loading Playback...");
         let playback = Arc::new(Playback::new()?);
-        println!("Loading Queue...");
+        println!("Playback Loaded.");
         let queue = Queue::default();
-        println!("Loading Library...");
+        println!("Queue Loaded.");
         let library = Library::default();
+        println!("Library Loaded.");
         Ok(Orchestrator {
             playback,
             queue,

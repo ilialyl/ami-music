@@ -48,7 +48,6 @@ impl App {
     pub async fn run(mut self) -> Result<()> {
         // Create PID file to prevent concurrent session.
         fs::write(PID_FILE, process::id().to_string()).await?;
-        log::debug!("Daemon starting...");
 
         let config = Config::load()?;
 
@@ -87,7 +86,9 @@ impl App {
         };
 
         let listener = TcpListener::bind(daemon_addr.clone()).await?;
-        log::debug!("Server listening on {daemon_addr}");
+        let listen_msg = format!("Server listening on {daemon_addr}");
+        log::debug!("{listen_msg}");
+        println!("{listen_msg}");
 
         let router = Router::new()
             .route("/", get(WebSocketService::ws_handler))

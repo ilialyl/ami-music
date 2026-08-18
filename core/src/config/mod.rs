@@ -31,6 +31,8 @@ impl Config {
             Self::write_default_config(&path)?;
         }
         let text = std::fs::read_to_string(&path)?;
+        log::debug!("Config Loaded.");
+        println!("Config Loaded.");
         Ok(toml::from_str(&text)?)
     }
 
