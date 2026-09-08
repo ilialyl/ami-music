@@ -9,11 +9,7 @@ use std::{
 };
 
 use ami_core::{
-    config::LibraryConfig,
-    library::Library,
-    player::{Playback, playback_snapshot::PlayerSnapshot, playback_status::PlaybackStatus},
-    queue::{Queue, loop_mode::LoopMode, queue_snapshot::QueueSnapshot},
-    track::{Track, track_id::TrackId},
+    config::Config, library::Library, player::{Playback, playback_snapshot::PlayerSnapshot, playback_status::PlaybackStatus}, queue::{Queue, loop_mode::LoopMode, queue_snapshot::QueueSnapshot}, track::{Track, track_id::TrackId},
 };
 use anyhow::Result;
 use mpris_server::{Metadata, Property, Signal, Time};
@@ -39,12 +35,12 @@ pub struct Orchestrator {
 }
 
 impl Orchestrator {
-    pub fn new(tx: UnboundedSender<InternalEvent>) -> Result<Self> {
+    pub fn new(tx: UnboundedSender<InternalEvent>, config: &Config) -> Result<Self> {
         let playback = Arc::new(Playback::new()?);
         println!("Playback Loaded.");
         let queue = Queue::default();
         println!("Queue Loaded.");
-        let library = Library::default();
+        let library = Library::new(config.library.clone());
         println!("Library Loaded.");
         Ok(Orchestrator {
             playback,
@@ -519,7 +515,7 @@ impl Orchestrator {
         self.playback.player.clone()
     }
 
-    pub fn load_library_config(&mut self, library_config: LibraryConfig) {
-        self.library.load(library_config);
-    }
+    // pub fn load_library_config(&mut self, library_config: LibraryConfig) {
+    //     self.library.load(library_config);
+    // }
 }

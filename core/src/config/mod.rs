@@ -7,12 +7,12 @@ use std::{
 use anyhow::Result;
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Config {
     pub library: LibraryConfig,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct LibraryConfig {
     pub directories: Vec<PathBuf>,
 }

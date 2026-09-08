@@ -4,9 +4,7 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use walkdir::WalkDir;
 
 use crate::{
-    config::LibraryConfig,
-    library::helper::is_rodio_supported,
-    track::{Track, track_id::TrackId},
+    config::{LibraryConfig}, library::helper::is_rodio_supported, track::{Track, track_id::TrackId},
 };
 
 pub mod helper;
@@ -14,15 +12,18 @@ pub mod helper;
 #[cfg(test)]
 pub mod tests;
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Library {
     pub track_map: HashMap<TrackId, Arc<Track>>,
+    pub config: LibraryConfig,
 }
 
 impl Library {
-    pub fn load(&mut self, config: LibraryConfig) {
-        self.track_map.clear();
+    pub fn new(config: LibraryConfig) -> Self {
+        Self { track_map: Self::load(&config), config }
+    }
 
+    pub fn load(config: &LibraryConfig) -> HashMap<TrackId, Arc<Track>> {
         let track_vec: Vec<Track> = config
             .directories
             .par_iter()
@@ -47,6 +48,6 @@ impl Library {
             track_map.insert(t.id, Arc::new(t));
         });
 
-        self.track_map = track_map;
+        track_map
     }
 }

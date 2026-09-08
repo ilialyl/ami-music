@@ -32,29 +32,27 @@ pub struct App {
     pub internal_event_rx: Option<UnboundedReceiver<InternalEvent>>,
     pub mpris_server: Option<MprisServer>,
     pub listen: bool,
+    pub config: Config,
 }
 
 impl App {
     pub fn new(listen: bool) -> Result<Self> {
         let (tx, rx) = mpsc::unbounded_channel::<InternalEvent>();
+        let config = Config::load()?;
+        let orchestrator = Arc::new(RwLock::new(Orchestrator::new(tx, &config)?));
+
         Ok(App {
-            orchestrator: Arc::new(RwLock::new(Orchestrator::new(tx)?)),
+            orchestrator,
             mpris_server: None,
             internal_event_rx: Some(rx),
             listen,
+            config,
         })
     }
 
     pub async fn run(mut self) -> Result<()> {
         // Create PID file to prevent concurrent session.
         fs::write(PID_FILE, process::id().to_string()).await?;
-
-        let config = Config::load()?;
-
-        self.orchestrator
-            .write()
-            .await
-            .load_library_config(config.library);
 
         let (command_tx, command_rx) = mpsc::unbounded_channel::<Command>();
 
